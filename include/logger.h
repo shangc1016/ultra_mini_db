@@ -16,19 +16,14 @@ class Logger{
 
 public:
     Logger();
-    Logger(LogOption *logOption) : logOption(*logOption) {};
     ~Logger();
 
-    void SetLogLevel(LogLevel level);
-
-    void INFO (std::string);
-    void DEBUG(std::string);
+    static void INFO (std::string);
+    static void DEBUG(std::string);
 
 private:
 
-    void Log(LogLevel, std::string);
-
-    LogOption logOption;
+    static void Log(LogLevel, std::string);
 
 };
 

@@ -2,24 +2,23 @@
 #include<string>
 #include <sys/syslog.h>
 
-// #include "../include/logger.h"
-// #include "../include/database.h"
-
-
-#include<city.h>
-
+#include "../include/logger.h"
+#include "../include/database.h"
+#include "../include/hash.h"
 
 
 auto main() -> int {
 
     std::cout  << "====[hello minikv]====" << std::endl;
 
-    
-    std::string str = "shang";
+    minikv::Logger::DEBUG("sdc");
 
-    uint128 value = CityHash128(str.c_str(), str.size());
-    std::cout << value.first << " " << value.second << std::endl;
-   
+
+    minikv::Hash *cityHash = new minikv::CityHash();
+    std::string hello = "shangchao";
+
+    std::cout << cityHash->Hash32(hello) << std::endl;
+
     
     return 0;
 }
