@@ -13,22 +13,18 @@ add_compile_options(
     -Wextra
 )
 
+# 第三方动态库的位置
+link_directories("/usr/local/lib")
 
-link_directories(
-    "${PROJECT_SOURCE_DIR}/3rdparty/lib"   # 第三方动态库的位置
-)
-
-link_libraries(cityhash)                   # 第三方动态库的名称
 
 add_executable(miniDB ${SOURCES})
 
-target_include_directories(miniDB PRIVATE 
-    ${PROJECT_SOURCE_DIR}/include          # 本项目的头文件
-    ${PROJECT_SOURCE_DIR}/3rdparty/include # 三方库的头文件
-)
+
+# 项目依赖的库文件名字
+target_link_libraries(miniDB cityhash pthread)
 
 
-message(${SOURCES})
+# cmake打印信息
 message("-- CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER_ID}")
 message("-- CMAKE_CXX_COMPILER_VERSION: ${CMAKE_CXX_COMPILER_VERSION}")
 

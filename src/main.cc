@@ -1,24 +1,33 @@
-#include<iostream>
-#include<string>
-#include <sys/syslog.h>
+#include <iostream>
+#include <string>
+#include <mutex>
+#include <thread>
 
-#include "../include/logger.h"
-#include "../include/database.h"
-#include "../include/hash.h"
-
-
-auto main() -> int {
-
-    std::cout  << "====[hello minikv]====" << std::endl;
-
-    minikv::Logger::DEBUG("sdc");
+#include "../include/storageengine.h"
 
 
-    minikv::Hash *cityHash = new minikv::CityHash();
-    std::string hello = "shangchao";
+int main() {
 
-    std::cout << cityHash->Hash32(hello) << std::endl;
+
+    minikv::StorageEngine engine;
+
+    std::string key;
+    std::string value;
 
     
+    minikv::Status status = engine.Put("s", "sc");
+    if(status._stateCode != minikv::STATUS_OKAY) {
+        status.Print();
+    }
+    minikv::Status s1 = engine.Get("s", &value);
+    if(s1._stateCode != minikv::STATUS_OKAY){
+        status.Print();
+    } else {
+        std::cout << "value = " << value << std::endl;
+    }
+
+    
+    
     return 0;
+
 }
