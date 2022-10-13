@@ -3,4 +3,10 @@
 
 ##### cityhash
 
-`https://github.com/google/cityhash.git`  
+`https://github.com/google/cityhash.git`
+
+##### murmurhash
+
+
+##### gtest  
+

@@ -13,7 +13,15 @@ namespace minikv {
 
 
 struct MetaData{
+    uint64_t    _metaDataOffset;
+    uint64_t    _metaDataLength;
+
+    uint64_t    _bucketOffset;
+    uint64_t    _bucketItemNums;
+
+
     std::string _dbName;
+    std::string _dbPath;
 };
 
 
@@ -24,25 +32,34 @@ struct Record{
     Record      *_left;
     Record      *_right;
     uint64_t     _offset;
+    // 增加一个字段  表示是否被删除
+    bool         _deleted;
 
     Record(std::string k, std::string v, uint64_t off){
-        _key = k;
-        _value = v;
-        _offset = off;
+        _key     = k;
+        _value   = v;
+        _left    = NULL;
+        _right   = NULL;
+        _offset  = off;
+        _deleted = false;
     }
+
 };
 
 
 struct BucketSlot{
     Record     *_record;
     std::mutex  _lock;
+    // 增加一个记录条数信息
+    uint64_t    _recordNums;
 
     BucketSlot(){
-        _record = nullptr;
+        _record     = nullptr;
+        _recordNums = 0;
     }
 };
 
-
+// 哈希表,
 struct Bucket{
     uint64_t                  _bucketOffset;
     uint64_t                  _bucketSlotNum;
@@ -56,7 +73,6 @@ struct Bucket{
 };
 
 
-
 class StorageEngine{
 
 public:
@@ -64,39 +80,50 @@ public:
     StorageEngine();
     ~StorageEngine();
 
-    Status OpenDBFile();
+    Status* OpenDBFile();
 
-    Status InitBucket();
-    Status InitRecord();
+    Status* InitBucket();
+    Status* InitRecord();
 
 
     uint64_t Hash64(const std::string&);
     uint64_t Hash32(const std::string&);
 
 
-    Status Get(const std::string, std::string*);
-    Status Put(const std::string, const std::string);
+    Status* Get(const std::string, std::string*);
+    Status* Put(const std::string, const std::string);
+    Status* Delete(const std::string);
 
 
-    uint32_t KeyBucketIndex(const std::string &);
+    uint32_t KeySlotIndex(const std::string &);
 
 
-    Record* GetRecordRoot(uint32);
+    BucketSlot *GetBucketSlot(uint32_t);
+    Record* ReleaseSlotRecords(Record*);
+
+    uint32_t SlotRecordNums(BucketSlot*);
+
+    uint32_t BucketSlotNums();
 
 
-    Status SearchBST(Record*, const std::string &, std::string *);
-    Record* InsertBST(Record*, const std::string&, const std::string&);
-    Status TraverseBST(uint32);
+    Status* SearchBST(Record*, const std::string, std::string *);
+    Record* InsertBST(Record*, const std::string, const std::string&);
+    void    TraverseBST(Record*);
+    // 在树中，找到一条记录，先找到记录，然后修改
+    Record* FindRecord(Record*, const std::string&);
 
-    BucketSlot *GetBucketslot(uint32_t);
 
-    Status TraverseBST(Record*);
 
     // TODO
     // 1. 析构函数，释放对象内存
+
     // 2. 持久化
-    
-    // Status* 
+    // 在持久化的时候，再计算文件offset
+    Status* FlushBucketSlot(BucketSlot*);
+
+
+
+    Status* CloseBucket();
     
 
     
@@ -107,7 +134,7 @@ private:
     std::string   _databaseFile;
     std::fstream  _openedFile;
 
-
+    // 哈希表
     Bucket       *_bucket;
 
 
