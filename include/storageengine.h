@@ -12,6 +12,13 @@
 namespace minikv {
 
 
+/*
+从<hashed-kay:64, location:64>中得反向计算得到key的位置
+
+*/
+
+
+
 struct MetaData{
     uint64_t    _metaDataOffset;
     uint64_t    _metaDataLength;

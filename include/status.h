@@ -11,6 +11,9 @@ enum StatusCode{
     STATUS_ERROR,
     STATUS_FILE_NOT_OPEN,
     STATUS_EMPTY_PTR,
+    STATUS_NO_SPACE,
+    STATUS_NOT_FOUND,
+    STATUS_IO_ERROR,
 };
 
 
@@ -18,20 +21,22 @@ class Status {
 
 public:
 
-    Status(StatusCode _code, std::string _msg) : _stateCode(_code), _statusMessage(_msg) {};
-    
-    void Check(){
-        if(this->_stateCode != STATUS_OKAY)
-            this->Print();
-    }
-    
-    void Print() {
-        std::cout << "[Code]: " << this->_stateCode << ";\t[Msg]: " << this->_statusMessage << std::endl;
-    }
+    Status() : _statusCode(STATUS_OKAY), _statusMessage("") {}
 
-    StatusCode  _stateCode;
+    Status(StatusCode _code, std::string _msg) : _statusCode(_code), _statusMessage(_msg) {};
+
+    ~Status() {}
+
+    bool IsOK();
+
+    std::string ToString();
+
+private:
+
+    static std::string GetStatusCodeStr(StatusCode code);
+
+    StatusCode  _statusCode;
     std::string _statusMessage;
-
 };
 
 

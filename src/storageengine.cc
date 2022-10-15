@@ -20,8 +20,8 @@ StorageEngine::StorageEngine(){
     this->_databaseFile = "minikv.db";
     Status *status;
     status = this->OpenDBFile();
-    if(status->_stateCode != STATUS_OKAY){
-        status->Print();
+    if(!status->IsOK()){
+        std::cout << status->ToString() << std::endl;
         delete status;
         exit(EXIT_FAILURE);
     }
@@ -29,8 +29,8 @@ StorageEngine::StorageEngine(){
     delete status;
 
     status = this->InitBucket();
-    if(status->_stateCode != STATUS_OKAY){
-        status->Print();
+    if(!status->IsOK()){
+        std::cout << status->ToString() << std::endl;
         delete status;
         exit(EXIT_FAILURE);
     }
@@ -44,8 +44,8 @@ StorageEngine::~StorageEngine(){
 
     this->_openedFile.close();
     status = this->CloseBucket();
-    if(status->_stateCode != STATUS_OKAY){
-        status->Print();
+    if(!status->IsOK()){
+        std::cout << status->ToString() << std::endl;
     }
     delete status;
 }
@@ -122,8 +122,8 @@ Status* StorageEngine::Get(const std::string key, std::string* valuePlaceHolder)
     // printf("[GET][key]:%s, [keyIndex]:%d\n", key.c_str(), keyIndex);
     status = SearchBST(slot->_record, key, valuePlaceHolder);
     // 有可能，指针是空的，返回错误
-    if(status->_stateCode == STATUS_EMPTY_PTR){
-        printf("[Empty_Ptr]:-----------------key:%s;\tkeyIndex;%d\n", key.c_str() , keyIndex);
+    if(!status->IsOK()){
+        std::cout << status->ToString() << std::endl;
     }
     slot->_lock.unlock();
 

@@ -12,13 +12,14 @@ namespace minikv {
 enum LogLevel{
     LogDebug,
     LogInfo ,
-    LogWarn,
+    LogWarn ,
     LogError,
     LogEmerg,
+    LogTrace,
 };
 
 
-
+// 大于当前currentLogLevel的日志才能被写到syslog文件
 
 class Logger{
 
@@ -34,7 +35,11 @@ public:
 
     static void Emerg(std::string);
 
+    static void Trace(std::string, std::string);
+
     static void Log(int, std::string);
+
+    static void SetLogLevel(int);
 
     static int GetLogLevel();
 
@@ -45,7 +50,7 @@ public:
 
 
 private:
-
+    // 是不是线程安全的？
     static int currentLogLevel;
     static std::string ident;
     static int facility;

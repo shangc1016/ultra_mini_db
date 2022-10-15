@@ -27,12 +27,16 @@ void REPL() {
         std::cin >> value;
         // PUT
         status = engine.Put(key, value);
-        status->Check();
+        if(!status->IsOK()) {
+            std::cout << status->ToString() << std::endl;
+        }
         delete status;
 
         // GET
         status = engine.Get(key, &valuePlaceHolder);
-        status->Check();
+        if(!status->IsOK()) {
+            std::cout << status->ToString() << std::endl;
+        }
         delete status;
         std::cout << "[GET] key: " << key <<";\tvalue: " << valuePlaceHolder << std::endl;
     }

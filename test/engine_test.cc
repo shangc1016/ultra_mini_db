@@ -7,6 +7,7 @@
 
 #include "../include/storageengine.h"
 #include "../include/utils.h"
+#include "../include/status.h"
 
 
 
@@ -16,7 +17,7 @@ TEST(engine, PutGet){
 
     minikv::StorageEngine engine;
 
-    uint32_t loops = 0x10;
+    uint32_t loops = 0x100;
 
     std::string key;
     std::string value;
@@ -29,18 +30,22 @@ TEST(engine, PutGet){
         value = minikv::Utils::GenRandString(10);
         // PUT
         status = engine.Put(key, value);
-        status->Check();
+        if(!status->IsOK()) {
+            std::cout << status->ToString() << std::endl;
+        }
         delete status;
         // GET
         status = engine.Get(key, &valuePlaceHolder);
-        status->Check();
+        if(!status->IsOK()) {
+            std::cout << status->ToString() << std::endl;
+        }
         delete status;
 
         // EQ test
         EXPECT_EQ(value, valuePlaceHolder);
         value.clear();
         valuePlaceHolder.clear();
-    }
+    } 
 }
 
 
@@ -61,12 +66,14 @@ void threadFunc(minikv::StorageEngine *engine){
         value = minikv::Utils::GenRandString(10);
         // PUT
         status = engine->Put(key, value);
-        status->Check();
+        
         delete status;
 
         // GET
         status = engine->Get(key,  &valuePlaceHolder);
-        status->Check();
+        if(!status->IsOK()) {
+            std::cout << status->ToString() << std::endl;
+        }
         delete status;
         EXPECT_EQ(value, valuePlaceHolder);
 

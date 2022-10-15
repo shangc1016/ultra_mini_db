@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
-file(GLOB SOURCES *.cc ../src/storageengine.cc ../src/utils.cc ../3rdparty/*.cc)
+file(GLOB SOURCES *.cc ../src/*.cc ../3rdparty/*.cc)
 
 add_compile_options(
     -std=c++14 

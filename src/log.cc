@@ -37,11 +37,20 @@ void Logger::Emerg(std::string str){
     Logger::Log(LogEmerg, str);
 }
 
+void Logger::Trace(std::string tracePoint, std::string str){
+    Logger::Log(LogTrace, tracePoint + ":" + str);
+}
+
 
 // class static methods
 int Logger::GetLogLevel(){
     return currentLogLevel;
 }
+
+void Logger::SetLogLevel(int log_level){
+    Logger::currentLogLevel = log_level;
+}
+
 
 int Logger::GenFacility(){
     return LOG_USER;
