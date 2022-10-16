@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -5,6 +6,9 @@
 #include <initializer_list>
 #include <iostream>
 #include <memory>
+#include <mutex>
+#include <sstream>
+#include <thread>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -26,94 +30,85 @@
 #include <cstring>
 #include <map>
 
+#include <condition_variable>
+
+
 using namespace minikv;
 
 
 
-void InsertWriteBuffer(WriteBuffer* _wb) {
+// 线程之间用的互斥量
+std::mutex worker_mutex;
+std::mutex main_mutex;
+// 条件变量
+std::condition_variable cv_ready;
+std::condition_variable cv_done;
+// 临界区数据
+std::string data;
+// 两个临界区变量
+bool data_ready = false;
+bool data_processed = false;
 
-    std::string key;
-    std::string value;
-    std::string valuePlaceHolder;
 
-    PutOption putOption;
-    GetOption getOption;
+void ThreadWork(){
+
+    for(;;){
+        std::unique_lock<std::mutex> lock(main_mutex);
+        printf("[worker thread] wait main thread's data.\n");
+
+        cv_ready.wait(lock);
+
+        std::ostringstream oss;
+        oss << std::this_thread::get_id();
+        printf("[worker thread]:%s get chance to processing data.\n", oss.str().c_str());
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+        printf("worker thread complete processing data, notify main thread.\n");
+        // data_processed = true;
+        cv_done.notify_one();
+        lock.unlock();
+        // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
+
+}
+
+int main(){
+
+
+    std::thread worker1(ThreadWork);
+    std::thread worker2(ThreadWork);
+
+    int data = 0;
 
     for(;;) {
-        key = Utils::GenRandString(10);
-        value = Utils::GenRandString(10);
-        auto status = _wb->Put(putOption, key, value);
-        if(!status.IsOK()){
-            std::cout << status.ToString() << std::endl;
-        }
-        status = _wb->Get(getOption, key, &valuePlaceHolder);
-        if(!status.IsOK()) {
-            std::cout << status.ToString() << std::endl;
-        }
-        if(valuePlaceHolder.compare(value) != 0){
-            std::cout << "put get not equal" << std::endl;
-        }
-    }
-}
 
+        std::unique_lock<std::mutex> lock(main_mutex);
 
+        printf("main thread preparing data.\n");
 
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
-// kvservber main
-int main() {
+        // data_ready = true;
+        cv_ready.notify_one();
+        
+        printf("main thread notify child work to processing data.\n");
 
+        
+        printf("main thread waiting for child to complete.\n");
 
-
-    std::string filename = "/tmp/minikv/log";
-
-    int fd;
-
-    fd = open(filename.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP  |S_IROTH | S_IWOTH);
-    if(fd == -1){
-       printf("file open error:%s\n", strerror(errno));
+        cv_done.wait(lock);
+         
+        printf("data [%d] processed.\n", data);
+        // data_ready = false;
+        // data_processed = false;
+        data++;
     }
 
-    struct stat fileinfo;
-    stat(filename.c_str(), &fileinfo);
 
-    printf("filesize = %ld\n", fileinfo.st_size);
-
-    int ret = truncate(filename.c_str(), 4096 * 10);
-    if(ret != 0){
-        printf("truncate error, %s\n", strerror(errno));
-    }
-
-    void *ptr = mmap(0, 1024, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-
-    if(ptr == MAP_FAILED) {
-        close(fd);
-        printf("mmap failed: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+    worker1.join();
+    worker2.join();
     
-    close(fd);
-
-    std::string name = "shangchao";
-
-    strncpy((char*)ptr, name.c_str(), name.size());
-
-    strncpy((char*)((u_int64_t)ptr + 1024), name.c_str(), name.size());
-
-    printf("ptr = %p\n", ptr);
-
-    // char name[10];
-
-    // strncpy(name, (char*)ptr, 10);
-    // std::cout << name << std::endl;
-
-    // strncpy(name, (char*)(u_int64_t)ptr + 1024, 10);
-    // std::cout << name << std::endl;
-
-    ret = munmap(ptr,  1024);
-    printf("munmap ret = %d", ret);
 
 
-
-    return 0;
 }
-

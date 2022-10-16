@@ -161,6 +161,25 @@ inex索引使用multi_map的缺点：
 可以用只读的方式mmap到内存。另一个好的办法就是把multimap分成几个不同功能的部分，放在不同的地方，这样加载的话，snapshot不需要一次性的全部记载。
 
 
+
+#### MultiPart API
+对于key-value超大的记录是在怎么处理的？
+kingdb的作者使用了分块的想法，把一个超大key-value记录分成几个小的部分。保证了在网络传输中不会超时，
+- 在嵌入式的环境下，写入一个超大的记录会直接阻塞IO，
+- 但是对于CS模型的存储来说，传输一个超大的记录，可能就会超时，导致数据插入失败。解决方法就是将超大的记录分块。
+- 在socket网络编程中，把数据给recv，会调用多次write系统调用，但是缓冲区就会很大、
+
+
+#### WriteBuffer以及Order
+
+writebuffer在flush到磁盘的时候，需要加锁从而保证数据的一致性。因此在flush的时候，会阻塞数据写入到writeBuffer。
+因此writeBuffer有两个buffer，任何时刻，其中一个buffer接收数据，一个buffer用来flush数据到文件。
+当接受数据的buffer需要flush的时候，两个buffer角色互换。所以flush数据的时候也就不会阻塞写数据了。  
+
+
+#### 线程同步
+
+
 ----------
 
 
