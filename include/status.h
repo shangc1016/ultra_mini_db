@@ -14,6 +14,7 @@ enum StatusCode{
     STATUS_NO_SPACE,
     STATUS_NOT_FOUND,
     STATUS_IO_ERROR,
+    STATUS_BUFFER_FULL,
 };
 
 

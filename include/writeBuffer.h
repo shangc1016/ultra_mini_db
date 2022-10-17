@@ -11,6 +11,8 @@
 
 #include "options.h"
 #include "status.h"
+#include "record.h"
+// #include "database.h"
 
 namespace minikv {
 
@@ -22,7 +24,7 @@ class WriteBuffer{
 
 public:
 
-    WriteBuffer();
+    WriteBuffer(DatabaseOptions);
 
     ~WriteBuffer() { Close(); }
 
@@ -38,23 +40,24 @@ public:
 
 private:
 
-    // 线程执行的函数
+    // flush线程执行的函数
     void buffer_flush_loop();
 
     // 两个buffer: income buffer、flush buffer
-    std::array<std::vector<std::pair<std::string, std::string>>, 2> _buffers;
+    std::array<std::vector<Record>, 2> _buffers;
     // 两个buffer的size
-    std::array<int, 2> _size;
-    // 写buffer的锁
+    std::array<uint64_t, 2> _buffer_size;
+    // buffer swap 的锁
     std::mutex _write_lock;
-    // buffer达到这个大小就需要swap，然后flush了
-    uint64_t _buffer_size;
+
 
     // 两个buffer的下标
     int _income_index;
     int _flush_index;
     // 处理flush buffer的线程
-    std::thread buffer_flush_handler;
+    std::thread     _buffer_flush_handler;
+
+    DatabaseOptions _db_options;
 
 };
 

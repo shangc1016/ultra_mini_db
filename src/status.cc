@@ -25,6 +25,8 @@ std::string Status::GetStatusCodeStr(StatusCode code){
             return "STATUS_NOT_FOUND";
         case STATUS_IO_ERROR:
             return "STATUS_IO_ERROR";
+        case STATUS_BUFFER_FULL:
+            return "STATUS_BUFFER_FULL";
     }
 }
 

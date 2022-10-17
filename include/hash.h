@@ -48,14 +48,6 @@ Hash* MakeHash(HashType hashType);
 
 
 
-
-
-
-
-
-
-
-
 }
 
 #endif
