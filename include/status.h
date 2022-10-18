@@ -15,6 +15,7 @@ enum StatusCode{
     STATUS_NOT_FOUND,
     STATUS_IO_ERROR,
     STATUS_BUFFER_FULL,
+    STATUS_STR_TOO_LONG,
 };
 
 

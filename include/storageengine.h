@@ -12,6 +12,7 @@
 #include <thread>
 
 #include "record.h"
+#include "eventmanager.h"
 
 namespace minikv {
 
@@ -27,7 +28,7 @@ class StorageEngine{
 
 public:
 
-    StorageEngine(DatabaseOptions);
+    StorageEngine(DatabaseOptions, Event<std::vector<Record>>*);
     ~StorageEngine();
 
     Status Close();
@@ -41,12 +42,14 @@ public:
 
 private:
 
+    // 写数据到文件
+    void* buffer_store_loop();
 
-    void ThreadLoop(){
-        
-    }
+    std::thread     _buffer_store_handler;
 
-    std::thread     _store_loop_handler;
+    bool _thread_running;
+
+    Event<std::vector<Record>>* _sync_event;
     
     DatabaseOptions _db_options;
 

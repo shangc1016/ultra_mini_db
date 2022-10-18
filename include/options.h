@@ -2,7 +2,7 @@
 #define __OPTIONS_H_
 
 #include <cstdint>
-
+#include <string>
 
 
 namespace minikv {
@@ -15,6 +15,20 @@ enum HashType{
     MurmurHash128,
     
 };
+
+
+// PUT的参数,可以选择同步或者异步
+struct GetOption{
+    bool get;
+};
+
+
+
+// GET的参数:可以选择检查校验和
+struct PutOption{
+    bool put;
+};
+
 
 // 包括了文件类型
 struct DatabaseOptions{
@@ -37,6 +51,10 @@ struct DatabaseOptions{
     bool _error_if_exist;
     bool _create_if_missing;
 
+    std::string _db_name;
+
+    std::string _db_path;
+
     DatabaseOptions() {
 
         _internal_hstable_header_sz = 0X400;
@@ -50,6 +68,8 @@ struct DatabaseOptions{
         _error_if_exist = false;
 
         _create_if_missing = true;
+
+        _db_name = "minikv";
         
     }
 
@@ -60,17 +80,7 @@ struct DatabaseOptions{
 
 
 
-// PUT的参数,可以选择同步或者异步
-struct GetOption{
-    bool get;
-};
 
-
-
-// GET的参数:可以选择检查校验和
-struct PutOption{
-    bool put;
-};
 
 
 

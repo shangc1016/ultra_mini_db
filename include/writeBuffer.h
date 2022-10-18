@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <utility>
@@ -12,6 +13,7 @@
 #include "options.h"
 #include "status.h"
 #include "record.h"
+#include "eventmanager.h"
 // #include "database.h"
 
 namespace minikv {
@@ -24,7 +26,7 @@ class WriteBuffer{
 
 public:
 
-    WriteBuffer(DatabaseOptions);
+    WriteBuffer(DatabaseOptions, Event<std::vector<Record>>*);
 
     ~WriteBuffer() { Close(); }
 
@@ -41,21 +43,36 @@ public:
 private:
 
     // flush线程执行的函数
-    void buffer_flush_loop();
+    void* buffer_flush_loop();
 
     // 两个buffer: income buffer、flush buffer
     std::array<std::vector<Record>, 2> _buffers;
     // 两个buffer的size
     std::array<uint64_t, 2> _buffer_size;
-    // buffer swap 的锁
-    std::mutex _write_lock;
+    
+    // 写income_buffer的锁
+    std::mutex _write_income_lock;
 
+    // 交换income_buffer和flush_buffer的锁
+    std::mutex _swap_index_lock;
+
+    // 到那时查找、删除的时候，有可能会使用flush_buffer
+    // 如果正在delete、get的时候，正在put数据，或者正在swap
+    // 那遍历会不会失效？
+    // 需要额外的锁来保证数据安全
+    // get、delete的时候不能swap，
+
+
+    bool _thread_running;
 
     // 两个buffer的下标
     int _income_index;
     int _flush_index;
     // 处理flush buffer的线程
     std::thread     _buffer_flush_handler;
+
+    Event<std::vector<Record>> *_sync_event;
+
 
     DatabaseOptions _db_options;
 

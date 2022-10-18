@@ -1,6 +1,8 @@
 #include "../include/database.h"
 #include "../include/writeBuffer.h"
+#include "../include/eventmanager.h"
 
+#include <memory>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -10,39 +12,38 @@ namespace minikv {
 
 
 // 设置相关参数
-Database::Database(const DatabaseOptions& dbOption, std::string dbName){
+Database::Database(const DatabaseOptions& dbOption, std::string dbPath){
     
     // 
     _db_options = dbOption;
-    _db_name    = dbName;
+    _db_name    = dbPath;
+    
+    _db_options._db_path = dbPath;
+
+
+    Event<std::vector<Record>> _flush_event;
 
     // wb
-    _write_buffer = new WriteBuffer(_db_options);
+    _write_buffer = new WriteBuffer(_db_options, &_flush_event);
 
     // se
-    _storage_engine = new StorageEngine(_db_options);
+    _storage_engine = new StorageEngine(_db_options, &_flush_event);
 
     _event_manager = nullptr;
 }
 
 
 Database::~Database() {
-    Close();
-}
-
-Status Database::Close(){
-    
-    // 释放对象
-    // delete _storage_engine;
-    _storage_engine->Close();
-
-    _write_buffer->Close();
 
     delete _write_buffer;
     delete _storage_engine;
 
-    return Status(STATUS_OKAY, "Database::Close OK.");
+}
 
+Status Database::Close(){
+
+    // 关闭打开文件等，，，
+    return Status(STATUS_OKAY, "Database::Close");
 }
 
 

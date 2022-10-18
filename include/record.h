@@ -2,6 +2,7 @@
 #define __RECORD_H_
 
 #include <cstdint>
+#include <cstring>
 #include <string>
 
 namespace minikv {
@@ -17,9 +18,9 @@ struct Record{
     uint64_t    _value_offset; 
 
     // 暂时表示，应该以指针的形式存在
-    std::string _key;
-    std::string _value;
-
+    // TODO-
+    char _key[20];
+    char _value[20];
 
     // 存的实际size
     uint64_t    _key_size;

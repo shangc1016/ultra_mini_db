@@ -206,19 +206,9 @@ ByteArray
 
 
 
+#### MultiPart API 
 
-
-
-
-
-
-
-
-
-
-
-
-#### MultiPart API
-
-
+作者提到，原本是想先把storageEngine的部分和client-server两部分解耦，分别开发。这样便于维护、debug。
+但是作者提到，设计的db可以存储任意长度的key、value。但是storageEngine不能处理很大的record。client发送的record有多大，server端就会
+同样的分配一个buffer。在测试的时候。server会OOM。这种设计会占用太多内存，
 

@@ -1,22 +1,48 @@
 #include "../../include/database.h"
 #include "../../include/log.h"
+#include "../../include/utils.h"
 
+
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <gtest/gtest.h>
 #include <netinet/in.h>
+#include <ratio>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <thread>
 #include <unistd.h>
 #include <stdlib.h>
 #include <arpa/inet.h>
+
+#include "../../include/eventmanager.h"
+
 
 using namespace minikv;
 
 
 
 
+
+Event<int> _event_manager;
+
+
+void* thread_func(){
+    int value = _event_manager.Wait();
+    value++;
+    std::cout << "in thread, value = " << value << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    _event_manager.Done();
+    return 0;
+}
+
+
 int main(){
+
+
+
+    // th.join();
     // socket
     // int listenfd = socket(AF_INET, SOCK_STREAM, 0);
     // if(listenfd == -1){
@@ -76,38 +102,44 @@ int main(){
 
     
     // 默认构造函数
-    DatabaseOptions dbOptions;
+    // writebuffer最大100
+    DatabaseOptions db_options;
     
-    Database db(dbOptions, "/tmp/minikv");
+    Database db(db_options, "/tmp/minikv");
 
     Status status;
 
     std::string key;
     std::string value;
-    std::string valuePlaceHolder;
-
-
-    key = "shang";
-    value = "getget";
+    std::string value_place_holder;
 
     minikv::Logger::SetLogLevel(minikv::LogTrace);
 
-    status = db.Put(key, value);
-    if(!status.IsOK()) std::cout << status.ToString() << std::endl;
+    int loops = 0;
 
-    status = db.Get(key, &valuePlaceHolder);
-    if(!status.IsOK()) std::cout << status.ToString() << std::endl;
+    for(auto i = 0; i < loops; i++){
+        // std::cout << "[put-get]: " << i << std::endl;
+        printf("[put-get]: %d\n", i);
+        key = minikv::Utils::GenRandString(9);
+        value = Utils::GenRandString(9);
 
-    std::cout << value.compare(valuePlaceHolder) << std::endl;
+        status = db.Put(key, value);
+        if(!status.IsOK()) std::cout << status.ToString() << std::endl;
+
+        status = db.Get(key, &value_place_holder);
+        if(!status.IsOK()) std::cout << status.ToString() << std::endl;
+
+        if(value.compare(value_place_holder) != 0){
+            std::cout << "not equal." << std::endl;
+            std::cout << "value:" << value << std::endl;
+            std::cout << "value_place_holder:" << value_place_holder << std::endl;
+        }
+    }
 
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 
     db.Close();
-
-
-
-    // 放在database的析构中
-
 
 }
 

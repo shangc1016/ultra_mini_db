@@ -27,6 +27,8 @@ std::string Status::GetStatusCodeStr(StatusCode code){
             return "STATUS_IO_ERROR";
         case STATUS_BUFFER_FULL:
             return "STATUS_BUFFER_FULL";
+        case STATUS_STR_TOO_LONG:
+            return "STATUS_STR_TOO_LONG";
     }
 }
 
