@@ -1,6 +1,8 @@
 #ifndef __STORAGEENGINE_H_
 #define __STORAGEENGINE_H_
 
+#include "file.h"
+#include "hash.h"
 #include "options.h"
 #include "status.h"
 #include <city.h>
@@ -29,12 +31,13 @@ class StorageEngine{
 public:
 
     StorageEngine(DatabaseOptions, Event<std::vector<Record>>*);
-    ~StorageEngine();
 
-    Status Close();
+    ~StorageEngine() {}
 
 
-    
+    Status Get();
+
+    void Stop();
 
 
 
@@ -45,13 +48,21 @@ private:
     // 写数据到文件
     void* buffer_store_loop();
 
-    std::thread     _buffer_store_handler;
-
     bool _thread_running;
 
+    std::thread     _buffer_store_handler;
+
+    // sync with the thread in wb.
     Event<std::vector<Record>>* _sync_event;
     
     DatabaseOptions _db_options;
+
+    Hash *_hash;
+
+
+    FileResource *_file_resource;
+
+    
 
 };
 

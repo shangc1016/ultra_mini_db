@@ -48,12 +48,12 @@ struct DatabaseOptions{
     bool _need_compress;
 
     // 创建数据库的时候，不需要数据库目录提前准备好
-    bool _error_if_exist;
-    bool _create_if_missing;
-
-    std::string _db_name;
+    bool _create_db_dir_if_not_exist;
+    
 
     std::string _db_path;
+
+    long _max_single_file_size;
 
     DatabaseOptions() {
 
@@ -65,11 +65,10 @@ struct DatabaseOptions{
 
         _need_compress = false;
         
-        _error_if_exist = false;
+        _create_db_dir_if_not_exist = true;
 
-        _create_if_missing = true;
-
-        _db_name = "minikv";
+        //  1GB
+        _max_single_file_size = (1 << 20);
         
     }
 

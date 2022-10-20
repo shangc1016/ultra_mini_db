@@ -1,12 +1,14 @@
 #ifndef __DATABASE_H_
 #define __DATABASE_H_
 
+#include "eventmanager.h"
 #include "options.h"
 #include "status.h"
 #include "storageengine.h"
-#include "writeBuffer.h"
+#include "writebuffer.h"
 
 #include <string>
+#include <vector>
 
 namespace minikv {
 
@@ -21,7 +23,7 @@ public:
     Database(const DatabaseOptions&, std::string);
     ~Database();
 
-    Status Close();
+    // Status Close();
     Status Open();
     
 
@@ -45,14 +47,14 @@ public:
 
 private:
 
-    std::string _db_name;
     int         _fd;
-    bool        _is_open;
+    bool        _is_open;   // 为啥有这个参数?
     
     DatabaseOptions  _db_options;
     StorageEngine   *_storage_engine;
     WriteBuffer     *_write_buffer;
-    std::string     *_event_manager;
+    
+    Event<std::vector<Record>> *_flush_event;
 
     // 压缩
     // 校验

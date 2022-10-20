@@ -1,69 +1,62 @@
 #include "../include/database.h"
-#include "../include/writeBuffer.h"
-#include "../include/eventmanager.h"
 
-#include <memory>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <memory>
+
+#include "../include/eventmanager.h"
+
+/*
+cc file's header file
+
+c library header file
+
+cpp library header file
+
+project other header file
+
+*/ 
 
 namespace minikv {
 
 
 // 设置相关参数
-Database::Database(const DatabaseOptions& dbOption, std::string dbPath){
-    
-    // 
+Database::Database(const DatabaseOptions& dbOption, std::string dbPath) {
     _db_options = dbOption;
-    _db_name    = dbPath;
     
+    // dbPath会覆盖db_option._db_path
     _db_options._db_path = dbPath;
 
-
-    Event<std::vector<Record>> _flush_event;
-
+    // for buffer sync between wb and se.
+    // FIXBUG: 刚开始的时候，这儿是栈上分配的，离开作用域直接内存释放了，
+    // 下面两个实例化对象用不了。傻了。
+    _flush_event = new Event<std::vector<Record>>();
     // wb
-    _write_buffer = new WriteBuffer(_db_options, &_flush_event);
-
+    _write_buffer = new WriteBuffer(_db_options, _flush_event);
     // se
-    _storage_engine = new StorageEngine(_db_options, &_flush_event);
-
-    _event_manager = nullptr;
+    _storage_engine = new StorageEngine(_db_options, _flush_event);
 }
 
 
 Database::~Database() {
+    // stop thread
+    _write_buffer->Stop();
+    _storage_engine->Stop();
 
-    delete _write_buffer;
-    delete _storage_engine;
 
+
+    // delete _write_buffer;
+    // delete _storage_engine;
 }
 
-Status Database::Close(){
-
-    // 关闭打开文件等，，，
-    return Status(STATUS_OKAY, "Database::Close");
-}
 
 
 Status Database::Open(){
     // _dbName是一个目录，需要在这个目录下面创建多个存文件;
     // 检查路径是否存在，检查路径是否是个文件
 
-    struct stat info;
-    bool db_exists = (stat(_db_name.c_str(), &info) == 0);
-    // 创建database目录
-    if(db_exists && !(info.st_mode &  S_IFDIR)) {
-        return Status(STATUS_IO_ERROR, "A file with same name of database already exists.");
-    }
-
-    if(db_exists && _db_options._error_if_exist) {
-        return Status(STATUS_IO_ERROR, "The database directory already exist.");
-    }
-    if(!db_exists && _db_options._create_if_missing && (mkdir(_db_name.c_str(), 0755) < 0)) {
-        return Status(STATUS_IO_ERROR, "Creating database directory error.");
-    }
     // 创建database/dbOption文件
     // 如果dbOption文件存在，从其中读取配置选项,,,使用mmap的方式，把dbOption文件映射到内存
     // 否则从HATable中得到dbOption，

@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.16.0)
 
 project(kvserver VERSION 1.0)
 
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+set(CMAKE_CXX_COMPILER "/usr/bin/g++")
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -16,9 +16,6 @@ file(GLOB SOURCES *.cc ../*.cc ../../3rdparty/*.cc)
 
 add_compile_options(
     -std=c++14
-    -Werror 
-    -Wall 
-    -Wextra
     -fno-omit-frame-pointer    # 打印函数调用路径
     -fsanitize=address
     # -fsanitize=memory

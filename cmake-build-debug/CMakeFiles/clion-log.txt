@@ -1,0 +1,11 @@
+/opt/clion-2022.2.4/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/opt/clion-2022.2.4/bin/ninja/linux/ninja -G Ninja -S /home/sc/dev/cDev/ultra_mini_db -B /home/sc/dev/cDev/ultra_mini_db/cmake-build-debug
+-- CMAKE_CXX_COMPILER: GNU
+-- CMAKE_CXX_COMPILER_VERSION: 9.4.0
+-- CMAKE_CXX_COMPILER: GNU
+-- CMAKE_CXX_COMPILER_VERSION: 9.4.0
+/home/sc/dev/cDev/ultra_mini_db/test/../3rdparty/murmurhash3.cc/home/sc/dev/cDev/ultra_mini_db/test/../src/database.cc/home/sc/dev/cDev/ultra_mini_db/test/../src/eventmanager.cc/home/sc/dev/cDev/ultra_mini_db/test/../src/file.cc/home/sc/dev/cDev/ultra_mini_db/test/../src/hash.cc/home/sc/dev/cDev/ultra_mini_db/test/../src/log.cc/home/sc/dev/cDev/ultra_mini_db/test/../src/options.cc/home/sc/dev/cDev/ultra_mini_db/test/../src/status.cc/home/sc/dev/cDev/ultra_mini_db/test/../src/storageengine.cc/home/sc/dev/cDev/ultra_mini_db/test/../src/utils.cc/home/sc/dev/cDev/ultra_mini_db/test/../src/writebuffer.cc/home/sc/dev/cDev/ultra_mini_db/test/engine_test.cc/home/sc/dev/cDev/ultra_mini_db/test/main.cc
+-- CMAKE_CXX_COMPILER: GNU
+-- CMAKE_CXX_COMPILER_VERSION: 9.4.0
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/sc/dev/cDev/ultra_mini_db/cmake-build-debug

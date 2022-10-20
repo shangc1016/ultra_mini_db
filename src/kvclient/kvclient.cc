@@ -1,5 +1,13 @@
 #include "../../include/storageengine.h"
 #include "../../include/utils.h"
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <thread>
 #
 #include <arpa/inet.h>
 #include <cstdlib>
@@ -10,11 +18,39 @@
 #include <unistd.h>
 
 #include "../../include/eventmanager.h"
+#include "../../include/file.h"
 
 
+
+minikv::Event<int> event;
+
+bool run = true;
+
+void* loop(){
+    for(;;){
+
+        if(run)
+        printf("value =.\n");
+
+        
+    }
+}
 
 
 int main(){
+
+
+    std::thread thread(loop);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    run = false;
+
+    thread.join();
+
+
+
+
 
 
 

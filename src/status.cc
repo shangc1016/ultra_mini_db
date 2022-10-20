@@ -29,6 +29,8 @@ std::string Status::GetStatusCodeStr(StatusCode code){
             return "STATUS_BUFFER_FULL";
         case STATUS_STR_TOO_LONG:
             return "STATUS_STR_TOO_LONG";
+        default:
+            return "";
     }
 }
 

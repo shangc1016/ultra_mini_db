@@ -1,0 +1,175 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						4
+					],
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16.0"
+					},
+					"projectIndex" : 0,
+					"source" : "."
+				},
+				{
+					"build" : "src",
+					"childIndexes" : 
+					[
+						2,
+						3
+					],
+					"jsonFile" : "directory-src-Debug-b6cf2213fc5053b67c22.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "src"
+				},
+				{
+					"build" : "src/kvclient",
+					"jsonFile" : "directory-src.kvclient-Debug-d008b1d402cef603292f.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16.0"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "src/kvclient",
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"build" : "src/kvserver",
+					"jsonFile" : "directory-src.kvserver-Debug-4ad7f1c6959ad677a6ff.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16.0"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 2,
+					"source" : "src/kvserver",
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"build" : "test",
+					"jsonFile" : "directory-test-Debug-451c0598f41488bb20b9.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16.0"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 3,
+					"source" : "test",
+					"targetIndexes" : 
+					[
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3
+					],
+					"directoryIndexes" : 
+					[
+						0,
+						1
+					],
+					"name" : "minikv"
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2
+					],
+					"name" : "kvclient",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						3
+					],
+					"name" : "kvserver",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						4
+					],
+					"name" : "test_minikv",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 2,
+					"id" : "kvclient::@8838aee2cb3db5ab11b5",
+					"jsonFile" : "target-kvclient-Debug-1f04bb513b28e2e644e8.json",
+					"name" : "kvclient",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "kvserver::@8c1a9803b386f7ef6720",
+					"jsonFile" : "target-kvserver-Debug-3efe19efdf5b0b3a1a73.json",
+					"name" : "kvserver",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "test_minikv::@36f028580bb02cc8272a",
+					"jsonFile" : "target-test_minikv-Debug-759bed7f75cc6ea9a438.json",
+					"name" : "test_minikv",
+					"projectIndex" : 3
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/sc/dev/cDev/ultra_mini_db/cmake-build-debug",
+		"source" : "/home/sc/dev/cDev/ultra_mini_db"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}

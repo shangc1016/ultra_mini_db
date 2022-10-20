@@ -1,5 +1,6 @@
 #include "../include/hash.h"
 #include <city.h>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -42,11 +43,10 @@ Hash* MakeHash(HashType hashType){
         case MurmurHash128:
             return new MurmurHash();
         case CityHash64:
+        default:
             return new CityHash();
-
     }
+    return nullptr;
 }
-
-
 
 }

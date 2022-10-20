@@ -1,5 +1,5 @@
-#ifndef __WRITEBUFFER_H_
-#define __WRITEBUFFER_H_
+#ifndef __WRITE_BUFFER_H_
+#define __WRITE_BUFFER_H_
 
 #include <array>
 #include <cstdint>
@@ -28,7 +28,10 @@ public:
 
     WriteBuffer(DatabaseOptions, Event<std::vector<Record>>*);
 
-    ~WriteBuffer() { Close(); }
+    ~WriteBuffer();
+
+    void Stop();
+
 
 
     Status Get(GetOption&, std::string&, std::string*);
@@ -37,24 +40,25 @@ public:
 
     Status Delete(PutOption&, std::string&);
 
-    void Close();
 
 
 private:
 
     // flush线程执行的函数
-    void* buffer_flush_loop();
+    void buffer_flush_loop();
 
     // 两个buffer: income buffer、flush buffer
     std::array<std::vector<Record>, 2> _buffers;
-    // 两个buffer的size
-    std::array<uint64_t, 2> _buffer_size;
+ 
     
-    // 写income_buffer的锁
-    std::mutex _write_income_lock;
+    std::mutex _lock_get_level1;
 
-    // 交换income_buffer和flush_buffer的锁
-    std::mutex _swap_index_lock;
+    std::mutex _lock_put_level2;
+
+    std::mutex _lock_swap_index3;
+    // 在线程把flush_buffer数据交给se之前，flush_buffer是可以查询的
+    std::mutex _lock_flush_index4;
+
 
     // 到那时查找、删除的时候，有可能会使用flush_buffer
     // 如果正在delete、get的时候，正在put数据，或者正在swap
@@ -71,7 +75,12 @@ private:
     // 处理flush buffer的线程
     std::thread     _buffer_flush_handler;
 
+    // 这个eventmanager用于wb thread和se threa的同步.
     Event<std::vector<Record>> *_sync_event;
+
+    // 还需要主线程和wb thread之间的同步.
+    Event<int> _put_swap_sync;
+
 
 
     DatabaseOptions _db_options;

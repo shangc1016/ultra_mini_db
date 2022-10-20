@@ -1,47 +1,48 @@
 #ifndef __FILE_H_
 #define __FILE_H_
 
+#include <city.h>
 #include <cstdint>
 #include <string>
 #include <sys/mman.h>
+#include <sys/types.h>
 #include <vector>
+
+#include "options.h"
 
 namespace minikv {
 
-class FileResource{
 
+// 单个文件
+
+class FileResource{
 
 public:
 
-    // 返回新的文件名
-    std::string GenNewFileName();
+    FileResource(DatabaseOptions);
 
-    uint64_t Mmap(){
-        
-        // truncate(fd, new_file_size);
-        // void *ptr = mmap(0, file_length, int prot, int flags, int fd, __off_t offset)
-        // ...
-        return 0;
-    }
-    // 
+    ~FileResource();
 
+    u_int64_t GetFilePtr();
+
+    bool IsFileFull(u_int64_t);
+
+    std::string GetCurrentFilePath();
 
 private:
 
-    // 存储的所有文件都在这个目录下
-    std::string _dbName;
-    std::vector<std::string> _dbFiles;
-    int _currentFd;
-    int _curretnFile;
-    uint64_t _file_start_offset;    // mmap返结果
-    uint64_t _file_current_offset;  // 当前正在使用的mmap位置 
-    uint64_t file_max_size;         // _file_current_offset - _file_start_offset > file_max_size 的话，就需要flush这个文件，并且写一个新的文件
+    DatabaseOptions _db_options;
 
+    unsigned long _file_num;
 
+    // bool _is_file_open;
+    // int _fd;
+    
+    uint64_t _mmap_start_pos;
+    uint64_t _mmap_current_pos;
 
-
-
-
+    // max file size = _db_options._max_single_file_size
+    
 
 };
 
