@@ -1,5 +1,5 @@
-#ifndef __LOG_H_
-#define __LOG_H_
+#ifndef INCLUDE_LOG_H_
+#define INCLUDE_LOG_H_
 
 #include <sys/syslog.h>
 #include <syslog.h>
@@ -54,4 +54,4 @@ class Logger {
 
 }  // namespace minikv
 
-#endif
+#endif  // INCLUDE_LOG_H_

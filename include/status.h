@@ -1,5 +1,5 @@
-#ifndef __STATUS_H_
-#define __STATUS_H_
+#ifndef INCLUDE_STATUS_H_
+#define INCLUDE_STATUS_H_
 
 #include <iostream>
 #include <string>
@@ -25,7 +25,7 @@ class Status {
   Status() : _statusCode(STATUS_OKAY), _statusMessage("") {}
 
   Status(StatusCode _code, std::string _msg)
-      : _statusCode(_code), _statusMessage(_msg){};
+      : _statusCode(_code), _statusMessage(_msg) {}
 
   ~Status() {}
 
@@ -42,4 +42,4 @@ class Status {
 
 }  // namespace minikv
 
-#endif
+#endif  // INCLUDE_STATUS_H_

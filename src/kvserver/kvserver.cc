@@ -2,13 +2,13 @@
 #include "../../include/log.h"
 #include "../../include/utils.h"
 
-using namespace minikv;
+// using namespace minikv;
 
 int main() {
   minikv::Logger::SetLogLevel(minikv::LogTrace);
 
-  DatabaseOptions db_options;
-  Database db(db_options, "/tmp/minikv");
+  minikv::DatabaseOptions db_options;
+  minikv::Database db(db_options, "/tmp/minikv");
 
   std::string key;
   std::string val;
@@ -17,8 +17,8 @@ int main() {
   int loops = 1000;
 
   for (auto i = 0; i < loops; i++) {
-    key = Utils::GenRandString(10);
-    val = Utils::GenRandString(10);
+    key = minikv::Utils::GenRandString(10);
+    val = minikv::Utils::GenRandString(10);
 
     auto status = db.Put(key, val);
     if (!status.IsOK()) std::cout << status.ToString() << std::endl;

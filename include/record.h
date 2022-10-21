@@ -1,5 +1,5 @@
-#ifndef __RECORD_H_
-#define __RECORD_H_
+#ifndef INCLUDE_RECORD_H_
+#define INCLUDE_RECORD_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -29,8 +29,8 @@ class Record {
   }
 };
 
-// TODO-xx: 序列化的函数，反序列化的函数
+// TODO(shang): 序列化的函数，反序列化的函数
 
 }  // namespace minikv
 
-#endif
+#endif  // INCLUDE_RECORD_H_

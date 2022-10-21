@@ -1,5 +1,5 @@
-#ifndef __UTILS_H_
-#define __UTILS_H_
+#ifndef INCLUDE_UTILS_H_
+#define INCLUDE_UTILS_H_
 
 #include <cstdint>
 #include <string>
@@ -13,4 +13,4 @@ class Utils {
 
 }  // namespace minikv
 
-#endif
+#endif  // INCLUDE_UTILS_H_

@@ -1,18 +1,19 @@
-#ifndef __WRITE_BUFFER_H_
-#define __WRITE_BUFFER_H_
+#ifndef INCLUDE_WRITEBUFFER_H_
+#define INCLUDE_WRITEBUFFER_H_
 
 #include <array>
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <utility>
 #include <vector>
 
-#include "eventmanager.h"
-#include "options.h"
-#include "record.h"
-#include "status.h"
+#include "./eventmanager.h"
+#include "./options.h"
+#include "./record.h"
+#include "./status.h"
 // #include "database.h"
 
 namespace minikv {
@@ -71,4 +72,4 @@ class WriteBuffer {
 
 }  // namespace minikv
 
-#endif
+#endif  // INCLUDE_WRITEBUFFER_H_

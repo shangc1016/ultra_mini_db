@@ -1,5 +1,5 @@
-#ifndef __SERVER_H_
-#define __SERVER_H_
+#ifndef INCLUDE_SERVER_H_
+#define INCLUDE_SERVER_H_
 
 namespace minikv {
 
@@ -12,4 +12,4 @@ class Server {
 
 }  // namespace minikv
 
-#endif
+#endif  // INCLUDE_SERVER_H_

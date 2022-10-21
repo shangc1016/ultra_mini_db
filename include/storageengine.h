@@ -1,5 +1,5 @@
-#ifndef __STORAGEENGINE_H_
-#define __STORAGEENGINE_H_
+#ifndef INCLUDE_STORAGEENGINE_H_
+#define INCLUDE_STORAGEENGINE_H_
 
 #include <city.h>
 
@@ -10,12 +10,12 @@
 #include <thread>
 #include <vector>
 
-#include "eventmanager.h"
-#include "file.h"
-#include "hash.h"
-#include "options.h"
-#include "record.h"
-#include "status.h"
+#include "./eventmanager.h"
+#include "./file.h"
+#include "./hash.h"
+#include "./options.h"
+#include "./record.h"
+#include "./status.h"
 
 namespace minikv {
 
@@ -55,4 +55,4 @@ class StorageEngine {
 
 }  // namespace minikv
 
-#endif
+#endif  // INCLUDE_STORAGEENGINE_H_

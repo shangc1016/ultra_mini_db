@@ -1,5 +1,5 @@
-#ifndef __HSTABLE_H_
-#define __HSTABLE_H_
+#ifndef INCLUDE_HSTABLE_H_
+#define INCLUDE_HSTABLE_H_
 
 namespace minikv {
 
@@ -14,4 +14,4 @@ class HSTable {
 
 }  // namespace minikv
 
-#endif
+#endif  // INCLUDE_HSTABLE_H_

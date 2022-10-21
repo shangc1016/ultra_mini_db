@@ -1,5 +1,5 @@
-#ifndef __FILE_H_
-#define __FILE_H_
+#ifndef INCLUDE_FILE_H_
+#define INCLUDE_FILE_H_
 
 #include <city.h>
 #include <sys/mman.h>
@@ -57,4 +57,4 @@ class FileResource {
 
 }  // namespace minikv
 
-#endif
+#endif  // INCLUDE_FILE_H_

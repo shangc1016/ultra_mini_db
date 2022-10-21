@@ -1,5 +1,5 @@
-#ifndef __OPTIONS_H_
-#define __OPTIONS_H_
+#ifndef INCLUDE_OPTIONS_H_
+#define INCLUDE_OPTIONS_H_
 
 #include <cstdint>
 #include <string>
@@ -43,7 +43,7 @@ struct DatabaseOptions {
 
   std::string _db_path;
 
-  long _max_single_file_size;
+  int _max_single_file_size;
 
   // key的最大长度
   uint64_t _max_key_size;
@@ -75,4 +75,4 @@ struct DatabaseOptions {
 
 }  // namespace minikv
 
-#endif
+#endif  // INCLUDE_OPTIONS_H_
