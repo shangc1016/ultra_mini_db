@@ -9,11 +9,10 @@
 #include <utility>
 #include <vector>
 
-
-#include "options.h"
-#include "status.h"
-#include "record.h"
 #include "eventmanager.h"
+#include "options.h"
+#include "record.h"
+#include "status.h"
 // #include "database.h"
 
 namespace minikv {
@@ -22,75 +21,54 @@ namespace minikv {
 // 信号处理：停止服务
 // 线程协作机制
 
-class WriteBuffer{
+class WriteBuffer {
+ public:
+  WriteBuffer(DatabaseOptions, Event<std::vector<Record>> *);
 
-public:
+  ~WriteBuffer() {}
 
-    WriteBuffer(DatabaseOptions, Event<std::vector<Record>>*);
+  void Stop();
 
-    ~WriteBuffer();
+  Status Get(GetOption &, const std::string &, std::string *);
 
-    void Stop();
+  Status Put(PutOption &, const std::string &, const std::string &);
 
+  Status Delete(PutOption &, const std::string &);
 
+ private:
+  // flush线程执行的函数
+  void buffer_flush_loop();
 
-    Status Get(GetOption&, std::string&, std::string*);
+  // 两个buffer: income buffer、flush buffer
+  std::array<std::vector<Record>, 2> _buffers;
 
-    Status Put(PutOption&, std::string&, std::string&);
+  std::mutex _lock_get_put_level1;
 
-    Status Delete(PutOption&, std::string&);
+  std::mutex _lock_swap_index2;
 
+  // 到那时查找、删除的时候，有可能会使用flush_buffer
+  // 如果正在delete、get的时候，正在put数据，或者正在swap
+  // 那遍历会不会失效？
+  // 需要额外的锁来保证数据安全
+  // get、delete的时候不能swap，
 
+  bool _thread_running;
 
-private:
+  // 两个buffer的下标
+  int _income_index;
+  int _flush_index;
+  // 处理flush buffer的线程
+  std::thread _buffer_flush_handler;
 
-    // flush线程执行的函数
-    void buffer_flush_loop();
+  // 这个eventmanager用于wb thread和se threa的同步.
+  Event<std::vector<Record>> *_sync_event;
 
-    // 两个buffer: income buffer、flush buffer
-    std::array<std::vector<Record>, 2> _buffers;
- 
-    
-    std::mutex _lock_get_level1;
+  // 还需要主线程和wb thread之间的同步.
+  Event<int> _put_swap_sync;
 
-    std::mutex _lock_put_level2;
-
-    std::mutex _lock_swap_index3;
-    // 在线程把flush_buffer数据交给se之前，flush_buffer是可以查询的
-    std::mutex _lock_flush_index4;
-
-
-    // 到那时查找、删除的时候，有可能会使用flush_buffer
-    // 如果正在delete、get的时候，正在put数据，或者正在swap
-    // 那遍历会不会失效？
-    // 需要额外的锁来保证数据安全
-    // get、delete的时候不能swap，
-
-
-    bool _thread_running;
-
-    // 两个buffer的下标
-    int _income_index;
-    int _flush_index;
-    // 处理flush buffer的线程
-    std::thread     _buffer_flush_handler;
-
-    // 这个eventmanager用于wb thread和se threa的同步.
-    Event<std::vector<Record>> *_sync_event;
-
-    // 还需要主线程和wb thread之间的同步.
-    Event<int> _put_swap_sync;
-
-
-
-    DatabaseOptions _db_options;
-
+  DatabaseOptions _db_options;
 };
 
-
-
-
-
-}
+}  // namespace minikv
 
 #endif

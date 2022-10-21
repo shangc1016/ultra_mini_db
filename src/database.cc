@@ -1,106 +1,80 @@
 #include "../include/database.h"
 
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <memory>
 
 #include "../include/eventmanager.h"
 
-/*
-cc file's header file
-
-c library header file
-
-cpp library header file
-
-project other header file
-
-*/ 
-
 namespace minikv {
 
-
 // 设置相关参数
-Database::Database(const DatabaseOptions& dbOption, std::string dbPath) {
-    _db_options = dbOption;
-    
-    // dbPath会覆盖db_option._db_path
-    _db_options._db_path = dbPath;
-
-    // for buffer sync between wb and se.
-    // FIXBUG: 刚开始的时候，这儿是栈上分配的，离开作用域直接内存释放了，
-    // 下面两个实例化对象用不了。傻了。
-    _flush_event = new Event<std::vector<Record>>();
-    // wb
-    _write_buffer = new WriteBuffer(_db_options, _flush_event);
-    // se
-    _storage_engine = new StorageEngine(_db_options, _flush_event);
+Database::Database(const DatabaseOptions &dbOption, std::string dbPath) {
+  _db_options = dbOption;
+  // dbPath会覆盖db_option._db_path
+  _db_options._db_path = dbPath;
+  // for buffer sync between wb and se.
+  // FIXBUG: 刚开始的时候，这儿是栈上分配的，离开作用域直接内存释放了，
+  // 下面两个实例化对象用不了。傻了。
+  _flush_event = new Event<std::vector<Record>>();
+  // wb
+  _write_buffer = new WriteBuffer(_db_options, _flush_event);
+  // se
+  _storage_engine = new StorageEngine(_db_options, _flush_event);
 }
-
 
 Database::~Database() {
-    // stop thread
-    _write_buffer->Stop();
-    _storage_engine->Stop();
+  // stop thread
+  _write_buffer->Stop();
+  _storage_engine->Stop();
 
-
-
-    // delete _write_buffer;
-    // delete _storage_engine;
+  // delete _write_buffer;
+  // delete _storage_engine;
 }
 
+Status Database::Open() {
+  // _dbName是一个目录，需要在这个目录下面创建多个存文件;
+  // 检查路径是否存在，检查路径是否是个文件
 
+  // 创建database/dbOption文件
+  // 如果dbOption文件存在，从其中读取配置选项,,,使用mmap的方式，把dbOption文件映射到内存
+  // 否则从HATable中得到dbOption，
+  // 如果啥都没有，就把初始化用到的dbOption写到文件中
 
-Status Database::Open(){
-    // _dbName是一个目录，需要在这个目录下面创建多个存文件;
-    // 检查路径是否存在，检查路径是否是个文件
+  // 初始化哈希函数，
 
-    // 创建database/dbOption文件
-    // 如果dbOption文件存在，从其中读取配置选项,,,使用mmap的方式，把dbOption文件映射到内存
-    // 否则从HATable中得到dbOption，
-    // 如果啥都没有，就把初始化用到的dbOption写到文件中
+  // 实例化StorageEngine
+  // 实例化WriteBuffer
+  // 需要把线程同步的一些参数传递给两个对象
 
-    // 初始化哈希函数，
-
-    // 实例化StorageEngine
-    // 实例化WriteBuffer
-    // 需要把线程同步的一些参数传递给两个对象
-
-    return Status(STATUS_OKAY, "Open Database successed.");
-
+  return Status(STATUS_OKAY, "Open Database successed.");
 }
 
-
-Status Database::Get(std::string &key, std::string *value){
-    GetOption get_option;
-    // FIXME-01
-    return Get(get_option, key, value);
+Status Database::Get(const std::string &key, std::string *value) {
+  GetOption get_option;
+  // FIXME-01
+  return Get(get_option, key, value);
 }
 
-
-Status Database::Get(GetOption &get_option, std::string &key, std::string *value){
-    return _write_buffer->Get(get_option, key, value);
+Status Database::Get(GetOption &get_option, const std::string &key,
+                     std::string *value) {
+  return _write_buffer->Get(get_option, key, value);
 }
 
-
-Status Database::Put(std::string &key, std::string &value){
-    PutOption put_option;
-    return Put(put_option, key, value);
+Status Database::Put(const std::string &key, const std::string &value) {
+  PutOption put_option;
+  return Put(put_option, key, value);
 }
 
-
-Status Database::Put(PutOption &put_option, std::string &key, std::string &value){
-    return _write_buffer->Put(put_option, key, value);
+Status Database::Put(PutOption &put_option, const std::string &key,
+                     const std::string &value) {
+  return _write_buffer->Put(put_option, key, value);
 }
 
-
-Status Database::Delete(std::string &key){
-    PutOption put_option;
-    return _write_buffer->Delete(put_option, key);
+Status Database::Delete(const std::string &key) {
+  PutOption put_option;
+  return _write_buffer->Delete(put_option, key);
 }
-
-
-
-}
+}  // namespace minikv

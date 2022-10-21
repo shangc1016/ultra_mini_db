@@ -1,60 +1,46 @@
 #include "../include/writebuffer.h"
-#include "../include/log.h"
+
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <chrono>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cwchar>
 #include <exception>
-#include <fcntl.h>
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <system_error>
 #include <thread>
-#include <unistd.h>
 #include <utility>
 
+#include "../include/log.h"
 
 namespace minikv {
 
-WriteBuffer::WriteBuffer(DatabaseOptions db_options, Event<std::vector<Record>> *event){
+WriteBuffer::WriteBuffer(DatabaseOptions db_options,
+                         Event<std::vector<Record>> *event) {
+  _income_index = 0;
+  _flush_index = 1;
 
-    _income_index = 0;
-    _flush_index  = 1;
+  _db_options = db_options;
 
-    _db_options = db_options;
+  _sync_event = event;
 
-    _sync_event = event;
+  _thread_running = true;
 
-    _thread_running = true;
-
-    _buffer_flush_handler = std::thread(&WriteBuffer::buffer_flush_loop, this);
-    if(_buffer_flush_handler.joinable()){
-        _buffer_flush_handler.detach();
-    }
-
+  _buffer_flush_handler = std::thread(&WriteBuffer::buffer_flush_loop, this);
+  if (_buffer_flush_handler.joinable()) {
+    _buffer_flush_handler.detach();
+  }
 }
 
-WriteBuffer::~WriteBuffer(){
-
-    // 退出线程
-    // if(_buffer_flush_handler.joinable()){
-    //     _buffer_flush_handler.join();
-    // }
-
-}
-
-void WriteBuffer::Stop(){
-    _thread_running = false;
-}
-
-
-
-
+void WriteBuffer::Stop() { _thread_running = false; }
 
 // put ：写入 income_buffer
 // loop: 使用 flush_buffer
@@ -64,166 +50,154 @@ void WriteBuffer::Stop(){
 // 2. flush_buffer  空了
 // 这样的话，也需要记录每个buffer的长度
 //   需要有锁保证两者的互斥
-// 
-// 
+//
+//
 
 // writeBuffer thread, to deliver buffer[_flush_index] to se.
-void WriteBuffer::buffer_flush_loop(){
+void WriteBuffer::buffer_flush_loop() {
+  while (true) {
+    if (_thread_running == false) break;
+    // wait for signal from `Put`, indicate buffer full.
+    _put_swap_sync.Wait();
 
-    while(true){
-
-
-        if(_thread_running == false) break;
-
-        // 等待Put满了，交换buffer
-        _put_swap_sync.Wait();
-        std::swap(_income_index, _flush_index);
-        printf("wb thread loop.\n");
-
-        _sync_event->SendAndWaitForDone(_buffers[_flush_index]);
-        printf("return writeBuffer::buffer_flush_loop\n");
-
-        // 这个buffer到最后再clear，
-        _buffers[_flush_index].clear();
-
-        // _sync_event->Reset();
-        _put_swap_sync.Done();
-
-        // swap 和 Get的时候读取flush_buffer是互斥的
-
-        
+    {
+      // acquire all lock.
+      std::lock_guard<std::mutex> lock1(_lock_get_put_level1);
+      std::lock_guard<std::mutex> lock3(_lock_swap_index2);
+      std::swap(_income_index, _flush_index);
     }
-    // TODO - is thread exit successfully?
-    // TODO - handle signal
+
+    _sync_event->SendAndWaitForDone(_buffers[_flush_index]);
+
+    // `se` have done it's work, just clear buffer.
+    _buffers[_flush_index].clear();
+    _buffers[_flush_index].shrink_to_fit();
+
+    // _sync_event->Reset(), signal back to `Put`.
+    _put_swap_sync.Done();
+  }
 }
 
+Status WriteBuffer::Put(PutOption &, const std::string &key,
+                        const std::string &val) {
+  minikv::Logger::Trace("WriteBuffer::Put", "");
 
-Status WriteBuffer::Put(PutOption&, std::string &key, std::string &value){
+  // key & value length validation
+  if (key.size() >= _db_options._max_key_size)
+    return Status(STATUS_KEY_TOO_LONG, "WriteBuffer::Put");
+  if (val.size() >= _db_options._max_val_size)
+    return Status(STATUS_VAL_TOO_LONG, "WriteBuffer::Put");
 
-    minikv::Logger::Trace("WriteBuffer::Put", "");
+  Record record;
+  // is deleted
+  record._is_deleted = false;
+  // pointer
+  record._key = key.c_str();
+  record._val = val.c_str();
 
+  // printf("============after xxx.c_str()\n");
 
-    if(key.size() > 20 || value.size() > 20){
-        return Status(STATUS_STR_TOO_LONG, "WriteBuffer::Put");
-    }
+  // size
+  record._key_size = key.size() + 1;
+  record._val_size = val.size() + 1;
 
-    Record record;
+  // printf("====key.size = %ld, val.size = %ld\n", record._key_size,
+  // record._val_size);
 
-    key.copy(record._key, key.size());
-    value.copy(record._value, value.size());
+  // margin
+  record._key_margin = _db_options._max_key_size - record._key_size;
+  record._val_margin = _db_options._max_val_size - record._val_size;
 
-    record._key[key.size()] = '\0';
-    record._value[value.size()] = '\0';
-
-
-    record._is_deleted = false;
-    record._key_size = key.size();
-    record._value_size = value.size();
-
-    // _lock_get_level1.lock();
-    // _lock_put_level2.lock();
-    
+  std::size_t buffer_len;
+  {
+    // acquire `get` and `put` lock.
+    std::lock_guard<std::mutex> lock1(_lock_get_put_level1);
     _buffers[_income_index].push_back(record);
+    buffer_len = _buffers[_income_index].size();
+  }
 
+  // check whether buffer full, thus to `swap`.
+  if (buffer_len >= _db_options._max_wb_buffer_size) {
+    _put_swap_sync.SendAndWaitForDone(1);  // none sense data
+    printf("[Put] =========== swaped\n");
+  }
 
-    // 默认在插入数据之后，检查income的长度z
-    if(_buffers[_income_index].size() >= _db_options._max_wb_buffer_size) {
-        printf("[Put]: income size = %ld\n", _buffers[_income_index].size());
-        _put_swap_sync.SendAndWaitForDone(1);
-        printf("[Put]: =========== swaped\n");
-    }
+  // printf("============put ok\n");
 
-    // _lock_put_level2.unlock();
-    // _lock_get_level1.unlock();
-
-
-
-    // 插入了一条记录，然后马上get查询，结果not found
-
-
-    return Status(STATUS_OKAY, "WriteBuffer::Put OK.");
+  return Status(STATUS_OKAY, "WriteBuffer::Put OK.");
 }
 
-
-Status WriteBuffer::Get(GetOption &, std::string &key, std::string *value){
-    
-    {   // search in income_buffer.
-        std::lock_guard<std::mutex> lock(_lock_get_level1);
-
-        auto buffer = _buffers[_income_index];
-        int buffer_len = buffer.size();
-
-        for(int i = 0; i < buffer_len; ++i){
-            // 逐个遍历，查找
-            if(strncmp(buffer[i]._key, key.c_str(), strlen(buffer[i]._key)) == 0){
-                *value = std::string(buffer[i]._value);
-                return Status(STATUS_OKAY, "WriteBuffer::Get::income");
-            }
-        }
-    }
-    
-    {   // search in flush_buffer.
-    // 这儿用的是flush_buffer的引用，所以可以不用管se怎么处理buffer
-        std::lock_guard<std::mutex> lock(_lock_get_level1);
-
-        auto& buffer = _buffers[_flush_index];
-
-        for(auto item : buffer){
-            if(strncmp(item._key, key.c_str(), strlen(item._key)) == 0){
-                *value = std::string(item._value);
-                return Status(STATUS_OKAY, "WriteBuffer::Get::flush");
-            }
-        }
-    }
-    
-    // TODO-01: 需要实现去storageEngine中查找.
-
-
-    return Status(STATUS_NOT_FOUND, "writeBuffer::Get not found");
-}
-
-
-Status WriteBuffer::Delete(PutOption &, std::string &key){
-
-    // 首先和Get一样，先income，再flush，遍历两个buffer。找到的话，修改_deleted参数
-    // step1:先在flush  buffer中查找
-    _lock_get_level1.lock();
-    auto buffer = _buffers[_income_index];
-    int buffer_len = buffer.size();
-    _lock_get_level1.unlock();
-    for(int i = 0; i < buffer_len; i++){
-        if(strncmp(buffer[i]._key, key.c_str(), strlen(buffer[i]._key))){
-            _lock_get_level1.lock();
-            _lock_put_level2.lock();
-            buffer[i]._is_deleted = true;
-            _lock_put_level2.unlock();
-            _lock_get_level1.unlock();
-            return Status(STATUS_OKAY, "WriteBuffer::Delete::income OK.");
-        }
-    }
-    // step2: 在income buffer侦破哪个查找
-    _lock_get_level1.lock();
-    buffer = _buffers[_flush_index];
+Status WriteBuffer::Get(GetOption &, const std::string &key,
+                        std::string *value) {
+  auto buffer = _buffers[_income_index];
+  std::size_t buffer_len;
+  {
+    std::lock_guard<std::mutex> lock(_lock_get_put_level1);
     buffer_len = buffer.size();
-    _lock_get_level1.unlock();
-    for(int i = 0; i < buffer_len; i++){
-        if(strncmp(buffer[i]._key, key.c_str(), strlen(buffer[i]._key))){
-            _lock_get_level1.lock();
-            _lock_put_level2.lock();
-            buffer[i]._is_deleted = true;
-            _lock_put_level2.unlock();
-            _lock_get_level1.unlock();
-            return Status(STATUS_OKAY, "WriteBuffer::Delete::income OK.");
-        }
+  }
+  // lock free.
+  for (std::size_t i = 0; i < buffer_len; ++i) {
+    if (strncmp(buffer[i]._key, key.c_str(), buffer[i]._key_size) == 0) {
+      *value = std::string(buffer[i]._val);
+      return Status(STATUS_OKAY, "WriteBuffer::Get::income");
     }
+  }
 
-    // TODO-04: 在storageEngine中删除一个记录
+  buffer = _buffers[_flush_index];
+  {
+    std::lock_guard<std::mutex> lock(_lock_get_put_level1);
+    buffer_len = buffer.size();
+  }
 
+  // lock free.
+  for (std::size_t i = 0; i < buffer_len; ++i) {
+    if (strncmp(buffer[i]._key, key.c_str(), buffer[i]._key_size) == 0) {
+      *value = std::string(buffer[i]._val);
+      return Status(STATUS_OKAY, "WriteBuffer::Get::flush");
+    }
+  }
 
-    return Status(STATUS_OKAY, "WriteBuffer::Delete OK.");
+  // TODO-01: 需要实现去storageEngine中查找.
+
+  return Status(STATUS_NOT_FOUND, "writeBuffer::Get not found");
 }
 
+Status WriteBuffer::Delete(PutOption &, const std::string &key) {
+  // 首先和Get一样，先income，再flush，遍历两个buffer。找到的话，修改_deleted参数
+  // step1:先在flush  buffer中查找
+  _lock_get_put_level1.lock();
+  auto buffer = _buffers[_income_index];
+  int buffer_len = buffer.size();
+  _lock_get_put_level1.unlock();
+  for (int i = 0; i < buffer_len; i++) {
+    if (strncmp(buffer[i]._key, key.c_str(), strlen(buffer[i]._key))) {
+      _lock_get_put_level1.lock();
+      // _lock_put_level2.lock();
+      buffer[i]._is_deleted = true;
+      // _lock_put_level2.unlock();
+      _lock_get_put_level1.unlock();
+      return Status(STATUS_OKAY, "WriteBuffer::Delete::income OK.");
+    }
+  }
+  // step2: 在income buffer侦破哪个查找
+  _lock_get_put_level1.lock();
+  buffer = _buffers[_flush_index];
+  buffer_len = buffer.size();
+  _lock_get_put_level1.unlock();
+  for (int i = 0; i < buffer_len; i++) {
+    if (strncmp(buffer[i]._key, key.c_str(), strlen(buffer[i]._key))) {
+      _lock_get_put_level1.lock();
+      // _lock_put_level2.lock();
+      buffer[i]._is_deleted = true;
+      // _lock_put_level2.unlock();
+      _lock_get_put_level1.unlock();
+      return Status(STATUS_OKAY, "WriteBuffer::Delete::income OK.");
+    }
+  }
 
+  // TODO-04: 在storageEngine中删除一个记录
 
-
+  return Status(STATUS_OKAY, "WriteBuffer::Delete OK.");
 }
+
+}  // namespace minikv

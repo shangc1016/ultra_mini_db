@@ -16,6 +16,10 @@ file(GLOB SOURCES *.cc ../*.cc ../../3rdparty/*.cc)
 
 add_compile_options(
     -std=c++14
+    -g
+    -O0
+    -Werror
+    -Wall
     -fno-omit-frame-pointer    # 打印函数调用路径
     -fsanitize=address
     # -fsanitize=memory

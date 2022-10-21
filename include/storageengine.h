@@ -1,76 +1,58 @@
 #ifndef __STORAGEENGINE_H_
 #define __STORAGEENGINE_H_
 
+#include <city.h>
+
+#include <cstdint>
+#include <fstream>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
+
+#include "eventmanager.h"
 #include "file.h"
 #include "hash.h"
 #include "options.h"
-#include "status.h"
-#include <city.h>
-#include <cstdint>
-#include <fstream>
-#include <string>
-#include <mutex>
-#include <vector>
-#include <thread>
-
 #include "record.h"
-#include "eventmanager.h"
+#include "status.h"
 
 namespace minikv {
-
 
 /*
 从<hashed-kay:64, location:64>中得反向计算得到key的位置
 
 */
 
+class StorageEngine {
+ public:
+  StorageEngine(DatabaseOptions, Event<std::vector<Record>>*);
 
+  ~StorageEngine() {}
 
-class StorageEngine{
+  Status Get();
 
-public:
+  void Stop();
 
-    StorageEngine(DatabaseOptions, Event<std::vector<Record>>*);
+ private:
+  // 写数据到文件
+  void* buffer_store_loop();
 
-    ~StorageEngine() {}
+  bool _thread_running;
 
+  std::thread _buffer_store_handler;
 
-    Status Get();
+  // sync with the thread in wb.
+  Event<std::vector<Record>>* _sync_event;
 
-    void Stop();
+  DatabaseOptions _db_options;
 
+  Hash* _hash;
 
-
-
-
-private:
-
-    // 写数据到文件
-    void* buffer_store_loop();
-
-    bool _thread_running;
-
-    std::thread     _buffer_store_handler;
-
-    // sync with the thread in wb.
-    Event<std::vector<Record>>* _sync_event;
-    
-    DatabaseOptions _db_options;
-
-    Hash *_hash;
-
-
-    FileResource *_file_resource;
-
-    
-
+  // mmap的
+  FileResource* _file_resource;
 };
 
-
-
-
-
-}
-
+}  // namespace minikv
 
 #endif
