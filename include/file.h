@@ -31,17 +31,21 @@ class FileResource {
 
   std::string GetCurrentFilePath();
 
-  Status SafeMemcpy(const void*, size_t);
-
   // 用来读数据
-  u_int64_t GetFilePtr();
+  uint64_t GetCurrentRecordPtr();
+
+  void IncreaseRecordPtr(uint64_t);
+
+  uint32_t GetCurrentFileNumber();
+
+  bool IsFileFull(uint64_t);
 
  private:
-  bool IsFileFull(u_int64_t);
-
   void IncreaseFilePos(uint64_t);
 
   DatabaseOptions _db_options;
+
+  uint32_t _file_number;
 
   uint64_t _mmap_start_pos;
   uint64_t _mmap_max_offset;
@@ -58,3 +62,13 @@ class FileResource {
 }  // namespace minikv
 
 #endif  // INCLUDE_FILE_H_
+
+/*
+
+使用mmap的过程：
+1、IsFileFull判断是否mmap满了
+2、GetCurrentRecordPtr得到当前mmap的record的指针
+3、memcpy或者其他的encode函数
+4、IncreaseRecordPtr指针移位
+
+*/

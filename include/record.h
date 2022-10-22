@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstring>
 #include <string>
+#include <vector>
 
 #include "status.h"
 
@@ -12,21 +13,23 @@ namespace minikv {
 
 class Record {
  public:
+  // function
+  Status EncodeRecord(uint64_t);
+  static Status DecodeRecord(uint64_t, Record&);
+
+  uint32_t GetRecordSize();
+
+  // variable
   bool _is_deleted;
 
-  const char *_key;
-  const char *_val;
+  std::vector<char> _key;
+  std::vector<char> _val;
 
   uint64_t _key_size;
   uint64_t _val_size;
 
   uint64_t _key_margin;
   uint64_t _val_margin;
-
-  Record() {
-    _key = nullptr;
-    _val = nullptr;
-  }
 };
 
 // TODO(shang): 序列化的函数，反序列化的函数

@@ -16,6 +16,8 @@
 #include <iostream>
 #include <string>
 
+#include "../include/utils.h"
+
 namespace minikv {
 
 // get all file's name in db_dir_path
@@ -51,8 +53,10 @@ FileResource::FileResource(DatabaseOptions db_options) {
 
   // step2: db dir exists,
   // FIXME:
-  auto filepath = _db_options._db_path + "/001";
-  // std::cout << "filepath:" << filepath << std::endl;
+  _file_number = 1;
+  auto filepath =
+      _db_options._db_path + "/" + Utils::MakeFixedLength(_file_number, 3);
+  std::cout << "filepath:" << filepath << std::endl;
   auto fd = open(filepath.c_str(), O_CREAT | O_RDWR, 0644);
   if (fd < 0) {
     fprintf(stderr, "FileResource::FileResource:open error:%s.\n",
@@ -86,9 +90,10 @@ FileResource::FileResource(DatabaseOptions db_options) {
   // 文件layout，header的offset；
   _mmap_header_offset = _db_options._internal_hstable_header_sz;
   // 记录的起始地址，
-  _mmap_record_start_pos = (uint64_t)ptr;
+  _mmap_record_start_pos =
+      (uint64_t)ptr + _db_options._internal_hstable_header_sz;
   // 记录的当前位置，
-  _mmap_record_current_pos = (uint64_t)ptr;
+  _mmap_record_current_pos = _mmap_record_start_pos;
 }
 
 FileResource::~FileResource() {
@@ -99,10 +104,18 @@ FileResource::~FileResource() {
   }
 }
 
-u_int64_t FileResource::GetFilePtr() { return _mmap_record_current_pos; }
+uint64_t FileResource::GetCurrentRecordPtr() {
+  return _mmap_record_current_pos;
+}
+
+void FileResource::IncreaseRecordPtr(uint64_t offset) {
+  _mmap_record_current_pos += offset;
+}
+
+uint32_t FileResource::GetCurrentFileNumber() { return _file_number; }
 
 bool FileResource::IsFileFull(uint64_t offset) {
-  return offset >= (_mmap_start_pos + _db_options._max_single_file_size);
+  return offset >= (_mmap_start_pos + _mmap_max_offset);
 }
 
 void FileResource::IncreaseFilePos(uint64_t increment) {
@@ -112,15 +125,6 @@ void FileResource::IncreaseFilePos(uint64_t increment) {
 std::string FileResource::GetCurrentFilePath() {
   auto path = _db_options._db_path + "/001";
   return path;
-}
-
-Status FileResource::SafeMemcpy(const void *buf, size_t len) {
-  if (IsFileFull(len))
-    return Status(STATUS_MMAP_FULL, "FileResource::SafeMemcpy full.");
-  std::memcpy((void *)GetFilePtr(), buf, len);
-  IncreaseFilePos(len);
-
-  return Status(STATUS_OKAY, "FileResource::SafeMemcpy OK.");
 }
 
 }  // namespace minikv

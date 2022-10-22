@@ -18,7 +18,10 @@
 #include <iostream>
 #include <ratio>
 #include <thread>
+#include <utility>
 #include <vector>
+
+#include "../include/utils.h"
 
 namespace minikv {
 
@@ -59,35 +62,33 @@ void StorageEngine::Stop() { _thread_running = false; }
 // <hashed-key, location> where location contain info about `which file` and
 // `what offset within the file`. the list we get is called `index` next step:
 // considerate how and where to persist those `index`.
-void* StorageEngine::buffer_store_loop() {
-  auto fd = open("001", O_CREAT | O_WRONLY | O_APPEND, 0644);
-  if (fd < 0) {
-    fprintf(stderr, "open error:%s\n", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-
+void StorageEngine::buffer_store_loop() {
+  // infinite loop, to handle data from `wb`.
   while (true) {
     if (_thread_running == false) break;
 
     auto buffer = _sync_event->Wait();
-    // printf("se have lock\n");
 
     for (auto item : buffer) {
-      // 计算hash-key，底层
-      fprintf(fdopen(fd, "w"), "%" PRIu64 "\n",
-              _hash->HashFunction(item._key, strlen(item._key)));
-      // delete item._key;
-      // delete item._val;
+      // step 1: get hashed-key.
+      auto hashed_key = _hash->HashFunction(item._key.data(), item._key_size);
+      // step 2: add record info to index. including hashed-key and location
+      // here we use filenumber and offset inside file to represent location.
+      auto file_number = _file_resource->GetCurrentFileNumber();
+      auto file_offset = _file_resource->GetCurrentRecordPtr();
+      auto location = Utils::GenLocation(file_number, file_offset);
+      // step 3: push <hashed-key, location> to  _index;
+      _index.insert(std::pair<uint64_t, uint64_t>(hashed_key, location));
+      // step 4: memcpy record header to mmap-ed address.
+      auto record_size = item.GetRecordSize();
+      if (!_file_resource->IsFileFull(record_size)) {
+        item.EncodeRecord(_file_resource->GetCurrentRecordPtr());
+        _file_resource->IncreaseRecordPtr(record_size);
+      }
     }
 
-    fflush(fdopen(fd, "w"));
     _sync_event->Done();
-    // printf("se have notuify wb\n");
   }
-
-  close(fd);
-
-  return 0;
 }
 
 }  // namespace minikv

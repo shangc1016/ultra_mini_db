@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <fstream>
+#include <map>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -36,7 +37,7 @@ class StorageEngine {
 
  private:
   // 写数据到文件
-  void* buffer_store_loop();
+  void buffer_store_loop();
 
   bool _thread_running;
 
@@ -48,6 +49,10 @@ class StorageEngine {
   DatabaseOptions _db_options;
 
   Hash* _hash;
+
+  // index to buffer all record's <hashed-key, location>
+  // where location refer to which file and what offset inside file.
+  std::multimap<uint64_t, uint64_t> _index;
 
   // mmap的
   FileResource* _file_resource;

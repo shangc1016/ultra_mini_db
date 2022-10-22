@@ -18,6 +18,7 @@
 #include <system_error>
 #include <thread>
 #include <utility>
+#include <vector>
 
 #include "../include/log.h"
 
@@ -91,19 +92,15 @@ Status WriteBuffer::Put(PutOption &, const std::string &key,
   Record record;
   // is deleted
   record._is_deleted = false;
-  // pointer
-  record._key = key.c_str();
-  record._val = val.c_str();
+  // convert std::string to std::vector<char>
+  record._key = std::vector<char>(key.begin(), key.end());
+  record._val = std::vector<char>(val.begin(), val.end());
 
-  // printf("============after xxx.c_str()\n");
-
-  // size
-  record._key_size = key.size() + 1;
-  record._val_size = val.size() + 1;
-
-  // printf("====key.size = %ld, val.size = %ld\n", record._key_size,
-  // record._val_size);
-
+  record._key.push_back('\0');
+  record._val.push_back('\0');
+  // size, include '\0'
+  record._key_size = record._key.size();
+  record._val_size = record._val.size();
   // margin
   record._key_margin = _db_options._max_key_size - record._key_size;
   record._val_margin = _db_options._max_val_size - record._val_size;
@@ -137,8 +134,9 @@ Status WriteBuffer::Get(GetOption &, const std::string &key,
   }
   // lock free.
   for (std::size_t i = 0; i < buffer_len; ++i) {
-    if (strncmp(buffer[i]._key, key.c_str(), buffer[i]._key_size) == 0) {
-      *value = std::string(buffer[i]._val);
+    if (strncmp(buffer[i]._key.data(), key.c_str(), buffer[i]._key_size - 1) ==
+        0) {
+      *value = std::string(buffer[i]._val.data());
       return Status(STATUS_OKAY, "WriteBuffer::Get::income");
     }
   }
@@ -151,8 +149,8 @@ Status WriteBuffer::Get(GetOption &, const std::string &key,
 
   // lock free.
   for (std::size_t i = 0; i < buffer_len; ++i) {
-    if (strncmp(buffer[i]._key, key.c_str(), buffer[i]._key_size) == 0) {
-      *value = std::string(buffer[i]._val);
+    if (strncmp(buffer[i]._key.data(), key.c_str(), buffer[i]._key_size) == 0) {
+      *value = std::string(buffer[i]._val.data());
       return Status(STATUS_OKAY, "WriteBuffer::Get::flush");
     }
   }
@@ -170,7 +168,7 @@ Status WriteBuffer::Delete(PutOption &, const std::string &key) {
   int buffer_len = buffer.size();
   _lock_get_put_level1.unlock();
   for (int i = 0; i < buffer_len; i++) {
-    if (strncmp(buffer[i]._key, key.c_str(), strlen(buffer[i]._key))) {
+    if (strncmp(buffer[i]._key.data(), key.c_str(), buffer[i]._key.size())) {
       _lock_get_put_level1.lock();
       // _lock_put_level2.lock();
       buffer[i]._is_deleted = true;
@@ -185,7 +183,7 @@ Status WriteBuffer::Delete(PutOption &, const std::string &key) {
   buffer_len = buffer.size();
   _lock_get_put_level1.unlock();
   for (int i = 0; i < buffer_len; i++) {
-    if (strncmp(buffer[i]._key, key.c_str(), strlen(buffer[i]._key))) {
+    if (strncmp(buffer[i]._key.data(), key.c_str(), buffer[i]._key.size())) {
       _lock_get_put_level1.lock();
       // _lock_put_level2.lock();
       buffer[i]._is_deleted = true;

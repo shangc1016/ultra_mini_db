@@ -67,9 +67,9 @@ struct DatabaseOptions {
     //  1GB
     _max_single_file_size = (1 << 20);
 
-    _max_key_size = 32;
+    _max_key_size = 256;
 
-    _max_val_size = 32;
+    _max_val_size = 256;
   }
 };
 
