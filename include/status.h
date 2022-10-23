@@ -29,6 +29,8 @@ class Status {
 
   ~Status() {}
 
+  StatusCode GetCode();
+
   bool IsOK();
 
   std::string ToString();

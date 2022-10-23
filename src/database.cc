@@ -11,10 +11,11 @@
 namespace minikv {
 
 // 设置相关参数
-Database::Database(const DatabaseOptions &dbOption, std::string dbPath) {
-  _db_options = dbOption;
-  // dbPath会覆盖db_option._db_path
-  _db_options._db_path = dbPath;
+Database::Database(const DatabaseOptions &db_option, std::string db_path) {
+  _db_options = db_option;
+  // db_path会覆盖db_option._db_path
+  if (!db_path.empty()) _db_options._db_path = db_path;
+
   // for buffer sync between wb and se.
   // FIXBUG: 刚开始的时候，这儿是栈上分配的，离开作用域直接内存释放了，
   // 下面两个实例化对象用不了。傻了。
@@ -38,10 +39,10 @@ Status Database::Open() {
   // _dbName是一个目录，需要在这个目录下面创建多个存文件;
   // 检查路径是否存在，检查路径是否是个文件
 
-  // 创建database/dbOption文件
-  // 如果dbOption文件存在，从其中读取配置选项,,,使用mmap的方式，把dbOption文件映射到内存
-  // 否则从HATable中得到dbOption，
-  // 如果啥都没有，就把初始化用到的dbOption写到文件中
+  // 创建database/db_option文件
+  // 如果db_option文件存在，从其中读取配置选项,,,使用mmap的方式，把db_option文件映射到内存
+  // 否则从HATable中得到db_option，
+  // 如果啥都没有，就把初始化用到的db_option写到文件中
 
   // 初始化哈希函数，
 

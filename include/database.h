@@ -32,7 +32,7 @@ class Database {
 
   Status Delete(const std::string &);
 
-  // TODO-
+  // TODO(shang): additerator to traverse entire db.
   Status NewIterator();
   Status Compact();  // 压缩db空间
   Status Flush();    // Flush数据库的数据到磁盘'

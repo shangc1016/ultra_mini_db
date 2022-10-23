@@ -55,7 +55,6 @@ StorageEngine::StorageEngine(DatabaseOptions db_option,
 
 void StorageEngine::Stop() { _thread_running = false; }
 
-// TODO:
 // step1: hash it,
 // step2: write it to mmaped file address space, and get the location where it
 // exist. step3: for each item in `buffered_data`, get coupled data ->

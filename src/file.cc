@@ -56,7 +56,7 @@ FileResource::FileResource(DatabaseOptions db_options) {
   _file_number = 1;
   auto filepath =
       _db_options._db_path + "/" + Utils::MakeFixedLength(_file_number, 3);
-  std::cout << "filepath:" << filepath << std::endl;
+  // std::cout << "filepath:" << filepath << std::endl;
   auto fd = open(filepath.c_str(), O_CREAT | O_RDWR, 0644);
   if (fd < 0) {
     fprintf(stderr, "FileResource::FileResource:open error:%s.\n",

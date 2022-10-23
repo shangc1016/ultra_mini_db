@@ -38,4 +38,6 @@ std::string Status::ToString() {
          ";\t[Msg]:" + _statusMessage;
 }
 
+StatusCode Status::GetCode() { return _statusCode; }
+
 }  // namespace minikv

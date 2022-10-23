@@ -65,7 +65,7 @@ struct DatabaseOptions {
     _db_path = "/tmp/minikv";
 
     //  1GB
-    _max_single_file_size = (1 << 20);
+    _max_single_file_size = (1 << 25);
 
     _max_key_size = 256;
 

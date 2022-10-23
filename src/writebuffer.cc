@@ -84,24 +84,23 @@ Status WriteBuffer::Put(PutOption &, const std::string &key,
   minikv::Logger::Trace("WriteBuffer::Put", "");
 
   // key & value length validation
-  if (key.size() >= _db_options._max_key_size)
+  if (key.size() - 1 >= _db_options._max_key_size)
     return Status(STATUS_KEY_TOO_LONG, "WriteBuffer::Put");
-  if (val.size() >= _db_options._max_val_size)
+  if (val.size() - 1 >= _db_options._max_val_size)
     return Status(STATUS_VAL_TOO_LONG, "WriteBuffer::Put");
 
+  // format K-V to record.
   Record record;
-  // is deleted
   record._is_deleted = false;
-  // convert std::string to std::vector<char>
   record._key = std::vector<char>(key.begin(), key.end());
-  record._val = std::vector<char>(val.begin(), val.end());
-
   record._key.push_back('\0');
+
+  record._val = std::vector<char>(val.begin(), val.end());
   record._val.push_back('\0');
-  // size, include '\0'
+  // size include '\0'.
   record._key_size = record._key.size();
   record._val_size = record._val.size();
-  // margin
+  // margin size.
   record._key_margin = _db_options._max_key_size - record._key_size;
   record._val_margin = _db_options._max_val_size - record._val_size;
 
@@ -155,7 +154,7 @@ Status WriteBuffer::Get(GetOption &, const std::string &key,
     }
   }
 
-  // TODO-01: 需要实现去storageEngine中查找.
+  // TODO(shang): 需要实现去storageEngine中查找.
 
   return Status(STATUS_NOT_FOUND, "writeBuffer::Get not found");
 }
@@ -193,7 +192,7 @@ Status WriteBuffer::Delete(PutOption &, const std::string &key) {
     }
   }
 
-  // TODO-04: 在storageEngine中删除一个记录
+  // TODO(shang): 在storageEngine中删除一个记录
 
   return Status(STATUS_OKAY, "WriteBuffer::Delete OK.");
 }

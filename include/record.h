@@ -19,6 +19,8 @@ class Record {
 
   uint32_t GetRecordSize();
 
+  // TODO(shang): add record validication method.
+
   // variable
   bool _is_deleted;
 

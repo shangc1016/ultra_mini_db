@@ -34,7 +34,7 @@ Status Record::EncodeRecord(uint64_t address) {
   address += sizeof(_val_margin);
   memcpy((void *)address, _key.data(), sizeof(char) * _key_size);
   //   FIXME
-  address += (_key_size + _key_margin) * sizeof(uint64_t);
+  address += (_key_size + _key_margin);
   //  NOYE: memcpy std::vector
   //  std::copy to copy it out.
   memcpy((void *)address, _val.data(), sizeof(char) * _val_size);
@@ -55,7 +55,7 @@ Status Record::DecodeRecord(uint64_t address, Record &record) {
   std::copy((char *)address, (char *)address + record._key_size,
             std::back_inserter(record._key));
   //   FIXME
-  address += (record._key_size + record._key_margin) * sizeof(uint64_t);
+  address += (record._key_size + record._key_margin);
   std::copy((char *)address, (char *)address + record._val_size,
             std::back_inserter(record._val));
   return Status(STATUS_OKAY, "Record::DecodeRecord");
