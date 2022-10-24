@@ -16,7 +16,7 @@
 
 // self-define K-V size, and record size test.
 // TODO: remember change func name.
-void loops_size_test(int loops, int key_size, int val_size) {
+void put_get_test(int loops, int key_size, int val_size) {
   minikv::DatabaseOptions database_option;
   minikv::Database db(database_option, "/tmp/minikv");
 
@@ -30,7 +30,7 @@ void loops_size_test(int loops, int key_size, int val_size) {
   minikv::Status s;
 
   for (auto i = 0; i < loops; i++) {
-    if (loops > 1000) std::cout << "\riter = " << i + 1 << std::flush;
+    if (loops > 1000) std::cout << "\riter = " << i + 1 << " " << std::flush;
     key = minikv::Utils::GenRandString(key_size);
     val = minikv::Utils::GenRandString(val_size);
 
@@ -44,41 +44,6 @@ void loops_size_test(int loops, int key_size, int val_size) {
     val_place_holder.clear();
   }
   if (loops > 1000) std::cout << std::endl;
-}
-
-void put_then_get_test(int loops) {
-  minikv::DatabaseOptions database_option;
-  minikv::Database db(database_option, "/tmp/minikv");
-
-  std::vector<std::pair<std::string, std::string>> vec;
-
-  std::string key;
-  std::string val;
-  std::string val_place_holder;
-
-  minikv::PutOption put_option;
-  minikv::GetOption get_option;
-
-  minikv::Status s;
-
-  for (auto i = 0; i < loops; i++) {
-    key = minikv::Utils::GenRandString(database_option._max_key_size / 2);
-    val = minikv::Utils::GenRandString(database_option._max_val_size / 2);
-    // temp store.
-    vec.push_back(std::pair<std::string, std::string>(key, val));
-
-    s = db.Put(put_option, key, val);
-    EXPECT_EQ(s.GetCode(), minikv::STATUS_OKAY);
-    key.clear();
-    val.clear();
-  }
-
-  for (auto item : vec) {
-    s = db.Get(get_option, item.first, &val_place_holder);
-    EXPECT_EQ(s.GetCode(), minikv::STATUS_OKAY);
-    EXPECT_EQ(item.second, val_place_holder);
-    val_place_holder.clear();
-  }
 }
 
 // overflow test.
@@ -101,10 +66,42 @@ void overflow_test(int key_size, int val_size, minikv::StatusCode code) {
   EXPECT_EQ(s.GetCode(), code);
 }
 
+void put_then_get(int len, int key_size, int val_size) {
+  std::string key;
+  std::string val;
+  std::string val_place_holder;
+
+  minikv::PutOption put_option;
+  minikv::GetOption get_option;
+  minikv::Status s;
+
+  // vector store rand gen kv;
+  std::vector<std::pair<std::string, std::string>> data;
+  // rand gen kv.
+  for (auto i = 0; i < len; ++i) {
+    key = minikv::Utils::GenRandString(key_size);
+    val = minikv::Utils::GenRandString(val_size);
+    data.push_back(std::make_pair(key, val));
+  }
+
+  minikv::DatabaseOptions database_option;
+  minikv::Database db(database_option, "/tmp/minikv");
+
+  for (auto i = 0; i < len; ++i) {
+    s = db.Put(put_option, data.at(i).first, data.at(i).second);
+    EXPECT_EQ(s.GetCode(), minikv::STATUS_OKAY);
+  }
+
+  for (auto i = 0; i < len; ++i) {
+    s = db.Get(get_option, data.at(i).first, &val_place_holder);
+    EXPECT_EQ(s.GetCode(), minikv::STATUS_OKAY);
+    EXPECT_EQ(data.at(i).second, val_place_holder);
+  }
+}
+
 /*
 `test_name` name spec:
-1、`test_loops<loops>_key<key_length>_val<val_length>`
-- key_length\val_length can also be `max`.
+1、`test_loops_<loops>_key_<key_length>_val_<val_length>`
 
 2、`test_key_overflow`
 
@@ -114,11 +111,58 @@ void overflow_test(int key_size, int val_size, minikv::StatusCode code) {
 
 */
 
-TEST(database_test, test_loops1_key10_val10) { loops_size_test(1, 10, 10); }
+///////////////////////////////////////////////////////////////////////////////////////////
 
-TEST(database_test, test_loops1_keymax_valmax) {
+// BUG: when testing different size key and val, error occur when key andf value
+// size too small, such as when key size==1 ,and  value size == 1, lead to
+// error. i think value_place_holder maybe wrong ,cause i pass std::string's
+// address, and it may change.
+// FIXME: !!!!!!!!!!!!
+
+TEST(database_test, kv_sz_1) {
+  // put_get_test(1, 1, 1);
+  put_get_test(10000, 5, 5);
+}
+
+TEST(database_test, put_and_get) {
   minikv::DatabaseOptions db_option;
-  loops_size_test(1, db_option._max_key_size, db_option._max_val_size);
+  auto max_key_sz = db_option._max_key_size;
+  auto max_val_sz = db_option._max_val_size;
+
+  put_get_test(1, 1, 1);
+  put_get_test(1, 5, 5);
+  put_get_test(1, 10, 10);
+  put_get_test(1, 50, 50);
+  put_get_test(1, 100, 100);
+  put_get_test(1, max_key_sz, max_val_sz);
+
+  put_get_test(10, 1, 1);
+  put_get_test(10, 5, 5);
+  put_get_test(10, 10, 10);
+  put_get_test(10, 50, 50);
+  put_get_test(10, 100, 100);
+  put_get_test(10, max_key_sz, max_val_sz);
+
+  put_get_test(100, 1, 1);
+  put_get_test(100, 5, 5);
+  put_get_test(100, 10, 10);
+  put_get_test(100, 50, 50);
+  put_get_test(100, 100, 100);
+  put_get_test(100, max_key_sz, max_val_sz);
+
+  put_get_test(1000, 1, 1);
+  put_get_test(1000, 5, 5);
+  put_get_test(1000, 10, 10);
+  put_get_test(1000, 50, 50);
+  put_get_test(1000, 100, 100);
+  put_get_test(1000, max_key_sz, max_val_sz);
+
+  put_get_test(10000, 1, 1);
+  put_get_test(10000, 5, 5);
+  put_get_test(10000, 10, 10);
+  put_get_test(10000, 50, 50);
+  put_get_test(10000, 100, 100);
+  put_get_test(10000, max_key_sz, max_val_sz);
 }
 
 TEST(database_test, test_key_overflow) {
@@ -139,47 +183,19 @@ TEST(database_test, test_k_v_overflow) {
                 database_option._max_val_size + 1, minikv::STATUS_KEY_TOO_LONG);
 }
 
-/*
-
-put all, then get all test.
-
-`test_name` name spec:
-
-1、test_put<nums>_get<nums>
-2、
-3、
-4、
-5、
-
-*/
-
-TEST(database_test, test_put_then_get_len_less) {
-  // note to consider with db_option._max_wb_buffer_size
+TEST(database_test, put_then_get) {
   minikv::DatabaseOptions db_option;
-  put_then_get_test(db_option._max_wb_buffer_size - 1);
+  auto max_key_sz = db_option._max_key_size;
+  auto max_val_sz = db_option._max_val_size;
+  // auto max_mmap_sz = db_option._max_single_file_size;
+
+  put_then_get(100, 1, 1);
+  put_then_get(100, 10, 10);
+  put_then_get(100, 100, 100);
+  put_then_get(100, max_key_sz, max_val_sz);
+
+  put_then_get(200, 1, 1);
+  put_then_get(200, 10, 10);
+  put_then_get(200, 100, 100);
+  put_then_get(200, max_key_sz, max_val_sz);
 }
-
-// FIXME: not pass.
-TEST(database_test, test_put_then_get_len_eq_wb_len) {
-  // note to consider with db_option._max_wb_buffer_size
-  minikv::DatabaseOptions db_option;
-
-  put_then_get_test(db_option._max_wb_buffer_size - 1);
-}
-
-// TEST(database_test, test_put_then_get_len_exceed_wb_len) {
-//   // note to consider with db_option._max_wb_buffer_size
-//   minikv::DatabaseOptions db_option;
-
-//   put_then_get_test(db_option._max_wb_buffer_size + 1);
-// }
-
-/*
-TODO:
-1、persist storage test: open db, put then close db,. reopen db and get.
-2、get test: get data that should be persist on disk.
-3、get test: get kv when system is in state of `swap`.
-4、get test: get kv that should store on `wb`.
-5、get test: get kv that should store on `se`.
-
-*/

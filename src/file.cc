@@ -108,11 +108,15 @@ uint64_t FileResource::GetCurrentRecordPtr() {
   return _mmap_record_current_pos;
 }
 
+uint64_t FileResource::GetMmapStartPtr() { return _mmap_start_pos; }
+
+uint64_t FileResource::GetRecordStartPtr() { return _mmap_record_start_pos; }
+
 void FileResource::IncreaseRecordPtr(uint64_t offset) {
   _mmap_record_current_pos += offset;
 }
 
-uint32_t FileResource::GetCurrentFileNumber() { return _file_number; }
+uint8_t FileResource::GetCurrentFileNumber() { return _file_number; }
 
 bool FileResource::IsFileFull(uint64_t offset) {
   return offset >= (_mmap_start_pos + _mmap_max_offset);
@@ -120,6 +124,10 @@ bool FileResource::IsFileFull(uint64_t offset) {
 
 void FileResource::IncreaseFilePos(uint64_t increment) {
   _mmap_record_current_pos += increment;
+}
+
+uint64_t FileResource::GetMmapSize() {
+  return _db_options._max_single_file_size;
 }
 
 std::string FileResource::GetCurrentFilePath() {

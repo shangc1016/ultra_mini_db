@@ -3,8 +3,9 @@
 // 测试
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
-  // filter based on the name of `test_suite_name`.
-  ::testing::GTEST_FLAG(filter) = "database_test*";
+
+  // filter spec: `<test_suite_name>.<test_name>`
+  ::testing::GTEST_FLAG(filter) = "database_test.kv_sz_1";
 
   return RUN_ALL_TESTS();
 }

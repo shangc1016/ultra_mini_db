@@ -36,16 +36,22 @@ class FileResource {
 
   void IncreaseRecordPtr(uint64_t);
 
-  uint32_t GetCurrentFileNumber();
+  uint8_t GetCurrentFileNumber();
 
   bool IsFileFull(uint64_t);
+
+  uint64_t GetRecordStartPtr();
+
+  uint64_t GetMmapStartPtr();
+
+  uint64_t GetMmapSize();
 
  private:
   void IncreaseFilePos(uint64_t);
 
   DatabaseOptions _db_options;
-
-  uint32_t _file_number;
+  //
+  uint8_t _file_number;
 
   uint64_t _mmap_start_pos;
   uint64_t _mmap_max_offset;

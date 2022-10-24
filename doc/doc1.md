@@ -212,3 +212,12 @@ ByteArray
 但是作者提到，设计的db可以存储任意长度的key、value。但是storageEngine不能处理很大的record。client发送的record有多大，server端就会
 同样的分配一个buffer。在测试的时候。server会OOM。这种设计会占用太多内存，
 
+
+
+#### note
+
+`printf` proper print uint64_t type example:
+```cpp
+uint64_t val;
+fprintf(stdout, "val = %" PRIu64 "\n", val);
+```

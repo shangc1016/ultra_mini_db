@@ -11,6 +11,16 @@
 #include "../include/storageengine.h"
 #include "../include/utils.h"
 
+/*
+file_resource test name spec;
+1、
+2、
+3、
+4、
+5、
+
+*/
+
 TEST(file_resource, insert_one_record_len_10) {
   minikv::DatabaseOptions db_options;
   minikv::FileResource fr(db_options);
@@ -33,7 +43,7 @@ TEST(file_resource, insert_one_record_len_10) {
   auto ptr = fr.GetCurrentRecordPtr();
   //   record encode.
   if (!fr.IsFileFull(record.GetRecordSize())) {
-    auto s = record.EncodeRecord(ptr);
+    auto s = minikv::Record::EncodeRecord(ptr, record);
     if (!s.IsOK()) std::cout << s.ToString() << std::endl;
   }
   minikv::Record read_record;
@@ -67,17 +77,17 @@ TEST(file_resource, insert_one_record_len_max) {
   record._val_size = record._val.size();
   record._key_margin = db_options._max_key_size - record._key_size;
   record._val_margin = db_options._max_val_size - record._val_size;
-  //   mmap ptr.
+  // mmap ptr.
   auto ptr = fr.GetCurrentRecordPtr();
-  //   record encode.
+  // record encode.
   if (!fr.IsFileFull(record.GetRecordSize())) {
-    auto s = record.EncodeRecord(ptr);
+    auto s = minikv::Record::EncodeRecord(ptr, record);
     if (!s.IsOK()) std::cout << s.ToString() << std::endl;
   }
   minikv::Record read_record;
-  //   record decode.
+  // record decode.
   minikv::Record::DecodeRecord(ptr, read_record);
-  //
+  // test check
   EXPECT_EQ(record._is_deleted, read_record._is_deleted);
   EXPECT_EQ(record._key_size, read_record._key_size);
   EXPECT_EQ(record._val_size, read_record._val_size);
@@ -119,7 +129,7 @@ TEST(file_resource, insert_full_record_len_10) {
     std::cout << "\riter = " << i + 1 << std::flush;
 
     auto ptr = fr.GetCurrentRecordPtr();
-    record.EncodeRecord(ptr);
+    minikv::Record::EncodeRecord(ptr, record);
     minikv::Record::DecodeRecord(ptr, read_record);
     EXPECT_EQ(record._is_deleted, read_record._is_deleted);
     EXPECT_EQ(record._key_size, read_record._key_size);
@@ -179,7 +189,7 @@ TEST(file_resource, insert_full_record_len_max) {
     std::cout << "\riter = " << i + 1 << std::flush;
 
     auto ptr = fr.GetCurrentRecordPtr();
-    record.EncodeRecord(ptr);
+    minikv::Record::EncodeRecord(ptr, record);
     minikv::Record::DecodeRecord(ptr, read_record);
     EXPECT_EQ(record._is_deleted, read_record._is_deleted);
     EXPECT_EQ(record._key_size, read_record._key_size);
@@ -223,3 +233,4 @@ TEST(file_resource, insert_record_val_overflow) {}
 
 // TODO(shang): insert record number overflow
 // TODO(shang): record other field violation test
+// TODO: insert same key.

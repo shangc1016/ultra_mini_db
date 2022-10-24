@@ -13,10 +13,12 @@ namespace minikv {
 
 class Record {
  public:
-  // function
-  Status EncodeRecord(uint64_t);
-  static Status DecodeRecord(uint64_t, Record&);
+  // static function
+  static Status DecodeRecord(uint64_t, Record &);
+  static Status EncodeRecord(uint64_t, const Record &);
+  static void Print(const Record &, bool);
 
+  // none static function
   uint32_t GetRecordSize();
 
   // TODO(shang): add record validication method.

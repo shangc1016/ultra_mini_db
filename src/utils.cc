@@ -27,21 +27,25 @@ std::string Utils::MakeFixedLength(const uint32_t num, const int length) {
   return ostr.str();
 }
 
-// combine high 32 bit and low 32 bit to 64bit value,
-// location ->  |  file number : 32bit | offset inside file: 23bit |
-uint64_t Utils::GenLocation(const uint32_t high, const uint32_t low) {
-  uint64_t value = high;
-  value = value << 32;
-  value += low;
-  return value;
-}
-
-uint32_t Utils::LocationDecodeFileNum(const uint64_t location) {
-  return (location - LocationDecodeFileOffset(location)) >> 32;
-}
-
-uint32_t Utils::LocationDecodeFileOffset(const uint64_t location) {
+// combine high 8 bit and low 56 bit to 64bit value,
+// location ->  |  file number : 8 bit | offset inside file: 56 bit |
+uint64_t Utils::GenLocation(const uint8_t file_num,
+                            const uint64_t file_offset) {
+  uint64_t location = file_num;
+  location = location << 56;
+  location += file_offset;
   return location;
+}
+
+uint8_t Utils::LocationDecodeFileNum(const uint64_t location) {
+  return location >> 56;
+}
+
+uint64_t Utils::LocationDecodeFileOffset(const uint64_t location) {
+  uint64_t mock_file_number = 1;
+  mock_file_number = mock_file_number << 56;
+  mock_file_number -= 1;
+  return mock_file_number & location;
 }
 
 }  // namespace minikv

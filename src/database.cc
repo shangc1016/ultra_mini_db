@@ -61,7 +61,11 @@ Status Database::Get(const std::string &key, std::string *value) {
 
 Status Database::Get(GetOption &get_option, const std::string &key,
                      std::string *value) {
-  return _write_buffer->Get(get_option, key, value);
+  // first: search in `wb`.
+  auto s = _write_buffer->Get(get_option, key, value);
+  if (s.IsOK()) return s;
+  // otherwise, search in `se`.
+  return _storage_engine->Get(get_option, key, value);
 }
 
 Status Database::Put(const std::string &key, const std::string &value) {

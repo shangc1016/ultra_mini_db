@@ -31,7 +31,7 @@ class StorageEngine {
 
   ~StorageEngine() {}
 
-  Status Get();
+  Status Get(GetOption&, const std::string&, std::string*);
 
   void Stop();
 
