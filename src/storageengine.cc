@@ -116,7 +116,10 @@ Status StorageEngine::Get(GetOption&, const std::string& key,
     fprintf(stdout, "`_index` not found\n");
     return Status(STATUS_NOT_FOUND, "StorageEngine::Get");
   }
-
+  // step3: decode from mmap address to object minikv::Record, and get it's val.
+  // is it possible to decrease overhead of `Get` here, cause here we don't care
+  // much other field of record.
+  // FIXME:!!!!! reverse order traverse to get newest record.
   for (auto iter = range.first; iter != range.second; ++iter) {
     if (iter->first == hashed_key) {
       auto file_offset = Utils::LocationDecodeFileOffset(iter->second);
