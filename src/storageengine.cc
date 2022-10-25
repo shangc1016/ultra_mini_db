@@ -30,6 +30,7 @@ StorageEngine::StorageEngine(DatabaseOptions db_option,
   _db_options = db_option;
   _sync_event = event;
 
+  _mmap_file_full = false;
   // flag to start thread, and stop it.
   _thread_running = true;
   // pass a class method to std::thread, add class object this.
@@ -83,6 +84,7 @@ void StorageEngine::buffer_store_loop() {
       // error.
       auto location = Utils::GenLocation(file_number, file_offset);
       // step 3: push <hashed-key, location> to  _index;
+      // FIXME: does std::multimap preserve the order data insert.
       _index.insert(std::pair<uint64_t, uint64_t>(hashed_key, location));
       // step 4: memcpy record header to mmap-ed address.
       auto record_size = item.GetRecordSize();
@@ -92,6 +94,7 @@ void StorageEngine::buffer_store_loop() {
       } else {
         // TODO: if mmap buffer full, some steps should be done.
         // step1:
+        _mmap_file_full = true;
         fprintf(stdout, "mmap file full, FIXME\n");
       }
     }
@@ -101,7 +104,7 @@ void StorageEngine::buffer_store_loop() {
 }
 // TODO: at this time, not use get_option.
 Status StorageEngine::Get(GetOption&, const std::string& key,
-                          std::string* value) {
+                          std::string& value) {
   // step1: same as persist to disk, calculate hashed-key.
   auto _key = std::vector<char>(key.begin(), key.end());
   _key.push_back('\0');
@@ -120,17 +123,30 @@ Status StorageEngine::Get(GetOption&, const std::string& key,
   // is it possible to decrease overhead of `Get` here, cause here we don't care
   // much other field of record.
   // FIXME:!!!!! reverse order traverse to get newest record.
+  // but underlaying data structure of stl multimap is tree, so there is no
+  // forward or backward way of traverse, thus we should fill `value` every time
+  // got same key while traversing std::multimap.
+  // FIXME: ugly...
+  value.clear();
   for (auto iter = range.first; iter != range.second; ++iter) {
     if (iter->first == hashed_key) {
       auto file_offset = Utils::LocationDecodeFileOffset(iter->second);
+      // TODO: slightly check whether file_offset legal, compare it with
+      // current_record_ptr, and it should not exceed current_ptr;
+      if (file_offset > _file_resource->GetCurrentRecordPtr()) {
+        return Status(STATUS_PTR_EXCEPTION,
+                      "StorageEngine::Get: file_offset exceed current ptr.");
+      }
       Record tmp_record;
       Record::DecodeRecord(file_offset, tmp_record);
       // BUG=FIXME: so ugly.
       tmp_record._val.pop_back();
-      *value = std::string(tmp_record._val.begin(), tmp_record._val.end());
-      return Status(STATUS_OKAY, "StorageEngine::Get OK.");
+      value = std::string(tmp_record._val.begin(), tmp_record._val.end());
     }
   }
-  return Status(STATUS_NOT_FOUND, "StorageEngine::Get");
+  if (value.size() == 0)
+    return Status(STATUS_NOT_FOUND, "StorageEngine::Get");
+  else
+    return Status(STATUS_OKAY, "StorageEngine::Get");
 }
 }  // namespace minikv

@@ -13,8 +13,10 @@
 #include <cwchar>
 #include <exception>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <system_error>
 #include <thread>
 #include <utility>
@@ -99,13 +101,13 @@ Status WriteBuffer::Put(PutOption &, const std::string &key,
   record._val = std::vector<char>(val.begin(), val.end());
   record._val.push_back('\0');
   // size include '\0'.
-  fprintf(stdout, "key = %s\t", record._key.data());
-  fprintf(stdout, "val = %s\n", record._val.data());
   record._key_size = record._key.size();
   record._val_size = record._val.size();
   // margin size.
   record._key_margin = _db_options._max_key_size - record._key_size;
   record._val_margin = _db_options._max_val_size - record._val_size;
+
+  // fprintf(stdout, "records size = %d\n", record.GetRecordSize());
 
   std::size_t buffer_len;
   {
@@ -135,26 +137,30 @@ Status WriteBuffer::Put(PutOption &, const std::string &key,
 }  // namespace minikv
 
 Status WriteBuffer::Get(GetOption &, const std::string &key,
-                        std::string *value) {
+                        std::string &value) {
   auto buffer = _buffers[_income_index];
-  std::size_t buffer_len;
+  // std::size_t buffer_len;
   {
     std::lock_guard<std::mutex> lock(_lock_get_put_level1);
-    buffer_len = buffer.size();
+    // buffer_len = buffer.size();
   }
   // lock free.
-  for (std::size_t i = 0; i < buffer_len; ++i) {
-    if (strncmp(buffer[i]._key.data(), key.c_str(), buffer[i]._key_size - 1) ==
-        0) {
-      *value = std::string(buffer[i]._val.data());
+  // BUG: FIXME
+
+  for (auto iter = buffer.rbegin(); iter != buffer.rend(); ++iter) {
+    if (!strncmp(iter->_key.data(), key.c_str(), iter->_key_size - 1)) {
+      auto tmp_val = iter->_val;
+      tmp_val.pop_back();
+      value = std::string(tmp_val.data());
       return Status(STATUS_OKAY, "WriteBuffer::Get::income");
     }
   }
-  buffer = _buffers[_flush_index];
-  {
-    std::lock_guard<std::mutex> lock(_lock_get_put_level1);
-    buffer_len = buffer.size();
-  }
+
+  // buffer = _buffers[_flush_index];
+  // {
+  //   std::lock_guard<std::mutex> lock(_lock_get_put_level1);
+  //   buffer_len = buffer.size();
+  // }
   // if `put` reach wb max size, then it will fluhs to se, and clear
   // flush_buffer. so it's none-sense to search in flush_buffer.
   //

@@ -53,14 +53,14 @@ Status Database::Open() {
   return Status(STATUS_OKAY, "Open Database successed.");
 }
 
-Status Database::Get(const std::string &key, std::string *value) {
+Status Database::Get(const std::string &key, std::string &value) {
   GetOption get_option;
   // FIXME-01
   return Get(get_option, key, value);
 }
 
 Status Database::Get(GetOption &get_option, const std::string &key,
-                     std::string *value) {
+                     std::string &value) {
   // first: search in `wb`.
   auto s = _write_buffer->Get(get_option, key, value);
   if (s.IsOK()) return s;

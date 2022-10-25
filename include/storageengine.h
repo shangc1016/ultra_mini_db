@@ -31,7 +31,7 @@ class StorageEngine {
 
   ~StorageEngine() {}
 
-  Status Get(GetOption&, const std::string&, std::string*);
+  Status Get(GetOption&, const std::string&, std::string&);
 
   void Stop();
 
@@ -49,6 +49,8 @@ class StorageEngine {
   DatabaseOptions _db_options;
 
   Hash* _hash;
+
+  bool _mmap_file_full;
 
   // index to buffer all record's <hashed-key, location>
   // where location refer to which file and what offset inside file.

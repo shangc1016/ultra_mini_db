@@ -18,6 +18,7 @@ enum StatusCode {
   STATUS_MMAP_FULL,
   STATUS_KEY_TOO_LONG,
   STATUS_VAL_TOO_LONG,
+  STATUS_PTR_EXCEPTION,
 };
 
 class Status {

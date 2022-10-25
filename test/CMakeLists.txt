@@ -20,6 +20,8 @@ add_compile_options(
     -Werror 
     -Wall 
     -Wextra 
+    -g
+    -O0
     -fno-omit-frame-pointer    # 打印函数调用路径
 )
 

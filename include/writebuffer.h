@@ -30,7 +30,7 @@ class WriteBuffer {
 
   void Stop();
 
-  Status Get(GetOption &, const std::string &, std::string *);
+  Status Get(GetOption &, const std::string &, std::string &);
 
   Status Put(PutOption &, const std::string &, const std::string &);
 

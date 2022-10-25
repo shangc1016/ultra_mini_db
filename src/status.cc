@@ -28,6 +28,8 @@ std::string Status::GetStatusCodeStr(StatusCode code) {
       return "STATUS_KEY_TOO_LONG";
     case STATUS_VAL_TOO_LONG:
       return "STATUS_VAL_TOO_LONG";
+    case STATUS_PTR_EXCEPTION:
+      return "STATUS_PTR_EXCEPTION";
     default:
       return "";
   }
