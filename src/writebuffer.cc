@@ -93,21 +93,8 @@ Status WriteBuffer::Put(PutOption &, const std::string &key,
     return Status(STATUS_VAL_TOO_LONG, "WriteBuffer::Put");
 
   // format K-V to record.
-  Record record;
-  record._is_deleted = false;
-  record._key = std::vector<char>(key.begin(), key.end());
-  record._key.push_back('\0');
-
-  record._val = std::vector<char>(val.begin(), val.end());
-  record._val.push_back('\0');
-  // size include '\0'.
-  record._key_size = record._key.size();
-  record._val_size = record._val.size();
-  // margin size.
-  record._key_margin = _db_options._max_key_size - record._key_size;
-  record._val_margin = _db_options._max_val_size - record._val_size;
-
-  // fprintf(stdout, "records size = %d\n", record.GetRecordSize());
+  Record record(key, val, false, _db_options._max_key_size,
+                _db_options._max_val_size);
 
   std::size_t buffer_len;
   {
@@ -148,73 +135,30 @@ Status WriteBuffer::Get(GetOption &, const std::string &key,
   // BUG: FIXME
 
   for (auto iter = buffer.rbegin(); iter != buffer.rend(); ++iter) {
-    if (!strncmp(iter->_key.data(), key.c_str(), iter->_key_size - 1)) {
-      auto tmp_val = iter->_val;
-      tmp_val.pop_back();
-      value = std::string(tmp_val.data());
-      return Status(STATUS_OKAY, "WriteBuffer::Get::income");
+    if (iter->_is_deleted == false && iter->_key_size - 1 == key.length() &&
+        !strncmp(iter->_key.data(), key.c_str(), iter->_key_size - 1)) {
+      value = std::string(iter->_val.data());
+      return Status(STATUS_OKAY, "WB::Get::income");
     }
   }
+  // TODO: implement search in flush_buffer.
 
-  // buffer = _buffers[_flush_index];
-  // {
-  //   std::lock_guard<std::mutex> lock(_lock_get_put_level1);
-  //   buffer_len = buffer.size();
-  // }
-  // if `put` reach wb max size, then it will fluhs to se, and clear
-  // flush_buffer. so it's none-sense to search in flush_buffer.
-  //
-  // fprintf(stdout, "WriteBuffer::Get, flush_buffer size = %ld\n", buffer_len);
-  // // lock free.
-  // for (std::size_t i = 0; i < buffer_len; ++i) {
-  //   if (strncmp(buffer[i]._key.data(), key.c_str(), buffer[i]._key_size) ==
-  //   0) {
-  //     *value = std::string(buffer[i]._val.data());
-  //     return Status(STATUS_OKAY, "WriteBuffer::Get::flush");
-  //   }
-  // }
-
-  // TODO(shang): searching in `storage_engine`
-
-  return Status(STATUS_NOT_FOUND, "writeBuffer::Get not found");
+  return Status(STATUS_NOT_FOUND, "WB::Get not found");
 }
 
-Status WriteBuffer::Delete(PutOption &, const std::string &key) {
-  // 首先和Get一样，先income，再flush，遍历两个buffer。找到的话，修改_deleted参数
-  // step1:先在flush  buffer中查找
-  _lock_get_put_level1.lock();
-  auto buffer = _buffers[_income_index];
-  int buffer_len = buffer.size();
-  _lock_get_put_level1.unlock();
-  for (int i = 0; i < buffer_len; i++) {
-    if (strncmp(buffer[i]._key.data(), key.c_str(), buffer[i]._key.size())) {
-      _lock_get_put_level1.lock();
-      // _lock_put_level2.lock();
-      buffer[i]._is_deleted = true;
-      // _lock_put_level2.unlock();
-      _lock_get_put_level1.unlock();
-      return Status(STATUS_OKAY, "WriteBuffer::Delete::income OK.");
+Status WriteBuffer::Delete(const PutOption &, const std::string &key) {
+  // almost same as `Get`, first to reverse search in flush_buffer.
+  auto &buffer = _buffers[_income_index];
+
+  for (auto iter = buffer.rbegin(); iter != buffer.rend(); ++iter) {
+    if (!strncmp(iter->_key.data(), key.c_str(), iter->_key_size - 1) &&
+        iter->_is_deleted == false) {
+      iter->_is_deleted = true;
+      return Status(STATUS_OKAY, "WB::Delete::income");
     }
   }
-  // step2: 在income buffer侦破哪个查找
-  _lock_get_put_level1.lock();
-  buffer = _buffers[_flush_index];
-  buffer_len = buffer.size();
-  _lock_get_put_level1.unlock();
-  for (int i = 0; i < buffer_len; i++) {
-    if (strncmp(buffer[i]._key.data(), key.c_str(), buffer[i]._key.size())) {
-      _lock_get_put_level1.lock();
-      // _lock_put_level2.lock();
-      buffer[i]._is_deleted = true;
-      // _lock_put_level2.unlock();
-      _lock_get_put_level1.unlock();
-      return Status(STATUS_OKAY, "WriteBuffer::Delete::income OK.");
-    }
-  }
-
-  // TODO(shang): 在storageEngine中删除一个记录
-
-  return Status(STATUS_OKAY, "WriteBuffer::Delete OK.");
+  // TODO: implement search in flush_buffer.
+  return Status(STATUS_NOT_FOUND, "WB::Delete not found.");
 }
 
 }  // namespace minikv

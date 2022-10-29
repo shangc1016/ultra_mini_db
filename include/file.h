@@ -7,6 +7,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -15,25 +17,24 @@
 
 namespace minikv {
 
-struct FileHeader {
-  uint64_t _record_nums;
-  uint64_t _chechsum;
-  uint64_t _version;
-  uint64_t _header_sz;
-};
-
-// 单个文件
+// 首先分析一下，把KVs写入到一个文件中，文件如果满了，就换一个新的文件继续写入。
+// 之前的文件就变成了只读文件。这样的话可行吗？
 class FileResource {
  public:
   FileResource(DatabaseOptions);
 
   ~FileResource();
 
+  // static mmap, munmap function.
+  // static uint64_t MmapFile(const std::string);
+  // static void MunmapFile();
+
   std::string GetCurrentFilePath();
 
-  // 用来读数据
+  // get this ptr, then to decode record
   uint64_t GetCurrentRecordPtr();
 
+  // call this after encode
   void IncreaseRecordPtr(uint64_t);
 
   uint8_t GetCurrentFileNumber();
@@ -46,12 +47,23 @@ class FileResource {
 
   uint64_t GetMmapSize();
 
+  // Status ChangeToNewFile();
+
  private:
   void IncreaseFilePos(uint64_t);
 
+  std::mutex _change_file_lock;
+
+  // step1: 检索合法的db文件名
+  void RetrievalFiles();
+
   DatabaseOptions _db_options;
   //
-  uint8_t _file_number;
+  uint8_t _current_file_number;
+
+  // std::vector<uint8_t> _files_vec;
+
+  std::map<uint8_t, void*> _files_mmap_vec;
 
   uint64_t _mmap_start_pos;
   uint64_t _mmap_max_offset;

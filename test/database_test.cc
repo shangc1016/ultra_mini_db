@@ -16,10 +16,13 @@
 #include "../include/storageengine.h"
 #include "../include/utils.h"
 
+// generated kv array.
+typedef std::vector<std::pair<std::string, std::string>> DataVec;
+
 // overflow test.
 void overflow_test(int key_size, int val_size, minikv::StatusCode code) {
-  minikv::DatabaseOptions database_option;
-  minikv::Database db(database_option, "/tmp/minikv");
+  minikv::DatabaseOptions db_opt;
+  minikv::Database db(db_opt, "/tmp/minikv");
 
   std::string key;
   std::string val;
@@ -37,9 +40,8 @@ void overflow_test(int key_size, int val_size, minikv::StatusCode code) {
 }
 
 // gen legal test case
-void gen_test_case(int loops, int key_size, int val_size,
-                   std::vector<std::pair<std::string, std::string>> &put_data,
-                   std::vector<std::pair<std::string, std::string>> &get_data) {
+void gen_test_case(int loops, int key_size, int val_size, DataVec &put_data,
+                   DataVec &get_data) {
   put_data.clear();
   get_data.clear();
 
@@ -65,10 +67,9 @@ void gen_test_case(int loops, int key_size, int val_size,
 }
 
 // first `put` all items, then `get`.
-void put_then_get(std::vector<std::pair<std::string, std::string>> &put_data,
-                  std::vector<std::pair<std::string, std::string>> &get_data) {
-  minikv::DatabaseOptions database_option;
-  minikv::Database db(database_option, "/tmp/minikv");
+void put_then_get(DataVec &put_data, DataVec &get_data) {
+  minikv::DatabaseOptions db_opt;
+  minikv::Database db(db_opt, "/tmp/minikv");
 
   std::string val_place_holder;
 
@@ -76,6 +77,7 @@ void put_then_get(std::vector<std::pair<std::string, std::string>> &put_data,
   minikv::GetOption get_option;
 
   minikv::Status s;
+
   // step1: put all item;
   for (auto item : put_data) {
     s = db.Put(put_option, item.first, item.second);
@@ -89,32 +91,65 @@ void put_then_get(std::vector<std::pair<std::string, std::string>> &put_data,
   }
 }
 
-/*
-`test_name` name spec:
-1、`test_loops_<loops>_key_<key_length>_val_<val_length>`
+// delete test entrance.
+void delete_test(DataVec &put_data, DataVec &get_data) {
+  minikv::DatabaseOptions db_opt;
+  minikv::Database db(db_opt, "/tmp/minikv");
 
-2、`test_key_overflow`
+  std::string val_place_holder;
 
-3、`test_val_overflow`
+  minikv::PutOption put_option;
+  minikv::GetOption get_option;
 
-4、`test_k_v_overflow`
+  minikv::Status s;
+  // step1: put all item in `put_data`;
+  for (auto item : put_data) {
+    s = db.Put(put_option, item.first, item.second);
+    EXPECT_EQ(s.GetCode(), minikv::STATUS_OKAY);
+  }
+  // step2: delete all item in `get_data`;
+  for (auto item : get_data) {
+    s = db.Delete(put_option, item.first);
+    EXPECT_EQ(s.GetCode(), minikv::STATUS_OKAY);
+  }
+  // step3: get all item in `get_data`;
+  for (auto item : get_data) {
+    s = db.Get(get_option, item.first, val_place_holder);
+    EXPECT_EQ(s.GetCode(), minikv::STATUS_NOT_FOUND);
+  }
+}
 
-*/
+////////////////////== TEST ==////////////////////
+TEST(database_test, test_key_overflow) {
+  minikv::DatabaseOptions db_opt;
+  overflow_test(db_opt._max_key_size + 1, db_opt._max_val_size,
+                minikv::STATUS_KEY_TOO_LONG);
+}
 
-///////////////////////////////////////////////////////////////////////////////////////////
+TEST(database_test, test_val_overflow) {
+  minikv::DatabaseOptions db_opt;
+  overflow_test(db_opt._max_key_size, db_opt._max_val_size + 1,
+                minikv::STATUS_VAL_TOO_LONG);
+}
+
+TEST(database_test, test_k_v_overflow) {
+  minikv::DatabaseOptions db_opt;
+  overflow_test(db_opt._max_key_size + 1, db_opt._max_val_size + 1,
+                minikv::STATUS_KEY_TOO_LONG);
+}
 
 TEST(database_test, put_get_loops1) {
-  minikv::DatabaseOptions db_option;
-  auto max_key_sz = db_option._max_key_size;
-  auto max_val_sz = db_option._max_val_size;
+  minikv::DatabaseOptions db_opt;
+  auto max_key_sz = db_opt._max_key_size;
+  auto max_val_sz = db_opt._max_val_size;
 
-  std::vector<std::pair<std::string, std::string>> put_data;
-  std::vector<std::pair<std::string, std::string>> get_data;
+  DataVec put_data;
+  DataVec get_data;
 
-  auto loops = 60000;
+  auto loops = 80000;
 
   // 1.
-  gen_test_case(loops, 3, 3, put_data, get_data);
+  gen_test_case(loops, 1, 1, put_data, get_data);
   put_then_get(put_data, get_data);
   // 2.
   gen_test_case(loops, 5, 5, put_data, get_data);
@@ -136,21 +171,26 @@ TEST(database_test, put_get_loops1) {
   put_then_get(put_data, get_data);
 }
 
-///////////////////////////////////////////////////////////
-TEST(database_test, test_key_overflow) {
-  minikv::DatabaseOptions database_option;
-  overflow_test(database_option._max_key_size + 1,
-                database_option._max_val_size, minikv::STATUS_KEY_TOO_LONG);
+TEST(database_test, test_delete) {
+  DataVec put_data;
+  DataVec get_data;
+
+  auto loops = 6000;
+
+  gen_test_case(loops, 1, 1, put_data, get_data);
+
+  delete_test(put_data, get_data);
 }
 
-TEST(database_test, test_val_overflow) {
-  minikv::DatabaseOptions database_option;
-  overflow_test(database_option._max_key_size,
-                database_option._max_val_size + 1, minikv::STATUS_VAL_TOO_LONG);
-}
+TEST(database_test, str_vec_test) {
+  std::string str = "shang";
 
-TEST(database_test, test_k_v_overflow) {
-  minikv::DatabaseOptions database_option;
-  overflow_test(database_option._max_key_size + 1,
-                database_option._max_val_size + 1, minikv::STATUS_KEY_TOO_LONG);
+  std::vector<char> vec = std::vector<char>(str.begin(), str.end());
+
+  vec.push_back('\0');
+
+  fprintf(stdout, "vec size = %ld\n", vec.size());
+
+  fprintf(stdout, "str size = %ld\n", str.length());
 }
+////////////////////== TEST END ==////////////////////
