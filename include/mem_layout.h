@@ -62,9 +62,9 @@ class Record {
   static Status EncodeRecord(uint64_t, const Record &);
   static Status DecodeRecord(uint64_t, Record &);
   static void Print(const Record &, bool);
-  static uint32_t RecordSize(Record &);
+  static uint32_t RecordSize(const Record &);
   // none static function
-  uint32_t GetRecordSize();
+  // uint32_t GetRecordSize();
 
   Record(const std::string &key, const std::string &val, bool is_delete,
          uint64_t max_key_sz, uint64_t max_val_sz) {

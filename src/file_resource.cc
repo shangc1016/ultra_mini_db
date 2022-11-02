@@ -58,14 +58,6 @@ FileResource::FileResource(DatabaseOptions db_options) {
   RetrievalFiles();
 
   // step4: check whether increase proper.
-  int start = 0;
-  for (uint8_t val : _files_vec) {
-    if (val - start != 1) {
-      fprintf(stdout, "[FR:FR]:ERR: filename not strictly increase by 1.\n");
-      exit(EXIT_FAILURE);
-    }
-    start = val;
-  }
 
   // now, we believe that front n-1 file have no extra space, but we dont
   // know whether last file is full.
@@ -80,8 +72,7 @@ FileResource::FileResource(DatabaseOptions db_options) {
   // std::cout << "filepath:" << filepath << std::endl;
   auto fd = open(filepath.c_str(), O_CREAT | O_RDWR, 0644);
   if (fd < 0) {
-    fprintf(stderr, "FileResource::FileResource:open error:%s.\n",
-            strerror(errno));
+    fprintf(stderr, "[FR:FR]: open error:%s.\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
 
@@ -92,13 +83,11 @@ FileResource::FileResource(DatabaseOptions db_options) {
   }
 
   int prot = PROT_READ | PROT_WRITE;
-  // printf("mmap64: size = %ld\n", _db_options._max_single_file_size);
   auto ptr = mmap64(nullptr, _db_options._max_single_file_size, prot,
                     MAP_SHARED, fd, 0);
   close(fd);
   if (ptr == nullptr) {
-    fprintf(stderr, "FileResource::FileResource:mmap error:%s.\n",
-            strerror(errno));
+    fprintf(stderr, "[FR:FR]: mmap error:%s.\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
 
@@ -120,13 +109,13 @@ FileResource::FileResource(DatabaseOptions db_options) {
 FileResource::~FileResource() {
   auto err = munmap((void *)_mmap_start_pos, _db_options._max_single_file_size);
   if (err < 0) {
-    fprintf(stderr, "FileResource:munmap error: %s\n", strerror(errno));
+    fprintf(stderr, "[FR:~FR]: error: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
 }
 
 Status FileResource::ChangeToNewFile() {
-  fprintf(stdout, "FileResource::ChangeToNewFile\n");
+  fprintf(stdout, "[FR:ChangeToNewFile]:\n");
 
   {
     std::lock_guard<std::mutex> lock(_change_file_lock);
@@ -134,7 +123,7 @@ Status FileResource::ChangeToNewFile() {
     auto err =
         munmap((void *)_mmap_start_pos, _db_options._max_single_file_size);
     if (err < 0) {
-      fprintf(stderr, "FileResource:munmap error: %s\n", strerror(errno));
+      fprintf(stderr, "[FR:munmap]: error:%s\n", strerror(errno));
       exit(EXIT_FAILURE);
     }
     // step2: increase file number.
@@ -144,8 +133,7 @@ Status FileResource::ChangeToNewFile() {
 
     auto fd = open(filepath.c_str(), O_CREAT | O_RDWR, 0644);
     if (fd < 0) {
-      fprintf(stderr, "FileResource::FileResource:open error:%s.\n",
-              strerror(errno));
+      fprintf(stderr, "[FR:open]: error:%s\n", strerror(errno));
       exit(EXIT_FAILURE);
     }
 
@@ -161,8 +149,7 @@ Status FileResource::ChangeToNewFile() {
                       MAP_SHARED, fd, 0);
     close(fd);
     if (ptr == nullptr) {
-      fprintf(stderr, "FileResource::FileResource:mmap error:%s.\n",
-              strerror(errno));
+      fprintf(stderr, "[FR:mmap]: error:%s\n", strerror(errno));
       exit(EXIT_FAILURE);
     }
 
@@ -188,21 +175,21 @@ void FileResource::RetrievalFiles() {
   _current_file_number = 0;
 
   // now db_path legal.
-  for (const auto &entry : std::experimental::filesystem::directory_iterator(
-           _db_options._db_path)) {
-    // step1: get it's filename.
-    auto filename = entry.path().filename();
-    // step2: convert it to uint8_t.
-    try {
-      uint8_t number = std::stoi(filename);
-      // _current_file_number 是最大的文件名
-      if (number > _current_file_number) _current_file_number = number;
-    } catch (std::invalid_argument const &ex) {
-      if (filename.compare("_index") != 0) {
-        exit(EXIT_FAILURE);
-      }
-    }
-  }
+  // for (const auto &entry : std::experimental::filesystem::directory_iterator(
+  //          _db_options._db_path)) {
+  //   // step1: get it's filename.
+  //   auto filename = entry.path().filename();
+  //   // step2: convert it to uint8_t.
+  //   try {
+  //     uint8_t number = std::stoi(filename);
+  //     // _current_file_number 是最大的文件名
+  //     if (number > _current_file_number) _current_file_number = number;
+  //   } catch (std::invalid_argument const &ex) {
+  //     if (filename.compare("_index") != 0) {
+  //       exit(EXIT_FAILURE);
+  //     }
+  //   }
+  // }
 }
 
 uint64_t FileResource::GetCurrentRecordPtr() {

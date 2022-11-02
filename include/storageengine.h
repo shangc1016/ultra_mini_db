@@ -12,10 +12,10 @@
 #include <vector>
 
 #include "./eventmanager.h"
-#include "./file.h"
+#include "./file_resource.h"
 #include "./hash.h"
+#include "./mem_layout.h"
 #include "./options.h"
-#include "./record.h"
 #include "./status.h"
 
 namespace minikv {
@@ -31,7 +31,9 @@ class StorageEngine {
 
   ~StorageEngine() {}
 
-  Status Get(GetOption&, const std::string&, std::string&);
+  Status Get(const GetOption&, const std::string&, std::string&);
+
+  Status Delete(const PutOption&, const std::string&);
 
   void Stop();
 

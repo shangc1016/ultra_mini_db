@@ -1,5 +1,5 @@
-#ifndef INCLUDE_FILE_H_
-#define INCLUDE_FILE_H_
+#ifndef INCLUDE_FILE_RESOURCE_H_
+#define INCLUDE_FILE_RESOURCE_H_
 
 #include <city.h>
 #include <sys/mman.h>
@@ -47,7 +47,7 @@ class FileResource {
 
   uint64_t GetMmapSize();
 
-  // Status ChangeToNewFile();
+  Status ChangeToNewFile();
 
  private:
   void IncreaseFilePos(uint64_t);

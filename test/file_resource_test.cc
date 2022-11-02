@@ -42,7 +42,7 @@ TEST(file_resource, insert_one_record_len_10) {
   //   mmap ptr.
   auto ptr = fr.GetCurrentRecordPtr();
   //   record encode.
-  if (!fr.IsFileFull(record.GetRecordSize())) {
+  if (!fr.IsFileFull(minikv::Record::RecordSize(record))) {
     auto s = minikv::Record::EncodeRecord(ptr, record);
     if (!s.IsOK()) std::cout << s.ToString() << std::endl;
   }
@@ -80,7 +80,7 @@ TEST(file_resource, insert_one_record_len_max) {
   // mmap ptr.
   auto ptr = fr.GetCurrentRecordPtr();
   // record encode.
-  if (!fr.IsFileFull(record.GetRecordSize())) {
+  if (!fr.IsFileFull(minikv::Record::RecordSize(record))) {
     auto s = minikv::Record::EncodeRecord(ptr, record);
     if (!s.IsOK()) std::cout << s.ToString() << std::endl;
   }
@@ -123,8 +123,10 @@ TEST(file_resource, insert_full_record_len_10) {
   record._key_margin = db_options._max_key_size - record._key_size;
   record._val_margin = db_options._max_val_size - record._val_size;
 
-  int loops = db_options._max_single_file_size / record.GetRecordSize();
-  printf("record.size = %d\t loops = %d\n", record.GetRecordSize(), loops);
+  int loops =
+      db_options._max_single_file_size / minikv::Record::RecordSize(record);
+  printf("record.size = %d\t loops = %d\n", minikv::Record::RecordSize(record),
+         loops);
   for (auto i = 0; i < loops; i++) {
     std::cout << "\riter = " << i + 1 << std::flush;
 
@@ -158,7 +160,7 @@ TEST(file_resource, insert_full_record_len_10) {
     record._key.push_back('\0');
     record._val = std::vector<char>(val.begin(), val.end());
     record._val.push_back('\0');
-    fr.IncreaseRecordPtr(record.GetRecordSize());
+    fr.IncreaseRecordPtr(minikv::Record::RecordSize(record));
   }
   std::cout << std::endl;
 }
@@ -183,8 +185,10 @@ TEST(file_resource, insert_full_record_len_max) {
   record._key_margin = db_options._max_key_size - record._key_size;
   record._val_margin = db_options._max_val_size - record._val_size;
 
-  int loops = db_options._max_single_file_size / record.GetRecordSize();
-  printf("record.size = %d\t loops = %d\n", record.GetRecordSize(), loops);
+  int loops =
+      db_options._max_single_file_size / minikv::Record::RecordSize(record);
+  printf("record.size = %d\t loops = %d\n", minikv::Record::RecordSize(record),
+         loops);
   for (auto i = 0; i < loops; i++) {
     std::cout << "\riter = " << i + 1 << std::flush;
 
@@ -220,7 +224,7 @@ TEST(file_resource, insert_full_record_len_max) {
     record._key.push_back('\0');
     record._val = std::vector<char>(val.begin(), val.end());
     record._val.push_back('\0');
-    fr.IncreaseRecordPtr(record.GetRecordSize());
+    fr.IncreaseRecordPtr(minikv::Record::RecordSize(record));
   }
   std::cout << std::endl;
 }

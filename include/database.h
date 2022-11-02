@@ -25,12 +25,13 @@ class Database {
   Status Open();
 
   Status Get(const std::string &, std::string &);
-  Status Get(GetOption &, const std::string &, std::string &);
+  Status Get(const GetOption &, const std::string &, std::string &);
 
   Status Put(const std::string &, const std::string &);
-  Status Put(PutOption &, const std::string &, const std::string &);
+  Status Put(const PutOption &, const std::string &, const std::string &);
 
   Status Delete(const std::string &);
+  Status Delete(const PutOption &, const std::string &);
 
   // TODO(shang): additerator to traverse entire db.
   Status NewIterator();

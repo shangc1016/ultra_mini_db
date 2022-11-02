@@ -82,7 +82,7 @@ void WriteBuffer::buffer_flush_loop() {
   }
 }
 
-Status WriteBuffer::Put(PutOption &, const std::string &key,
+Status WriteBuffer::Put(const PutOption &, const std::string &key,
                         const std::string &val) {
   minikv::Logger::Trace("WriteBuffer::Put", "");
 
@@ -123,7 +123,7 @@ Status WriteBuffer::Put(PutOption &, const std::string &key,
   return Status(STATUS_OKAY, "WriteBuffer::Put OK.");
 }  // namespace minikv
 
-Status WriteBuffer::Get(GetOption &, const std::string &key,
+Status WriteBuffer::Get(const GetOption &, const std::string &key,
                         std::string &value) {
   auto buffer = _buffers[_income_index];
   // std::size_t buffer_len;

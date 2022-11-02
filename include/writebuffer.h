@@ -11,8 +11,8 @@
 #include <vector>
 
 #include "./eventmanager.h"
+#include "./mem_layout.h"
 #include "./options.h"
-#include "./record.h"
 #include "./status.h"
 // #include "database.h"
 
@@ -30,11 +30,11 @@ class WriteBuffer {
 
   void Stop();
 
-  Status Get(GetOption &, const std::string &, std::string &);
+  Status Get(const GetOption &, const std::string &, std::string &);
 
-  Status Put(PutOption &, const std::string &, const std::string &);
+  Status Put(const PutOption &, const std::string &, const std::string &);
 
-  Status Delete(PutOption &, const std::string &);
+  Status Delete(const PutOption &, const std::string &);
 
  private:
   // flush线程执行的函数

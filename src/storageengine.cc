@@ -91,7 +91,7 @@ void StorageEngine::buffer_store_loop() {
       // step 3: push <hashed-key, location> to  _index;
       _index.insert(std::pair<uint64_t, uint64_t>(hashed_key, location));
       // step 4: memcpy record header to mmap-ed address.
-      auto record_size = item.GetRecordSize();
+      auto record_size = Record::RecordSize(item);
       auto current_ptr = _file_resource->GetCurrentRecordPtr();
       if (!_file_resource->IsFileFull(record_size + current_ptr)) {
         Record::EncodeRecord(current_ptr, item);

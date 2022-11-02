@@ -1,17 +1,37 @@
-#include "../include/record.h"
+#include "../include/mem_layout.h"
 
 #include <cstdint>
 #include <cstring>
 
 namespace minikv {
 
-uint32_t Record::GetRecordSize() {
-  // BUG: remember the critical record mmap layout.
-  // !!!!!!!
-  return sizeof(_is_deleted) + sizeof(_key_size) + sizeof(_val_size) +
-         sizeof(_key_margin) + sizeof(_val_margin) + _key_size + _key_margin +
-         _val_size + _val_margin;
+Status IndexHeader::EncodeIndexHeader(uint64_t, const IndexHeader &) {
+  return Status(STATUS_OKAY, "");
 }
+
+Status IndexHeader::DecodeIndexHeader(uint64_t, IndexHeader &) {
+  return Status(STATUS_OKAY, "");
+}
+
+void IndexHeader::Print(const IndexHeader &) {}
+
+Status RecordHeader::EncodeRecordHeader(uint64_t, const RecordHeader &) {
+  return Status(STATUS_OKAY, "");
+}
+
+Status RecordHeader::DecodeRecordHeader(uint64_t, RecordHeader &) {
+  return Status(STATUS_OKAY, "");
+}
+
+void RecordHeader::Print(const RecordHeader &) {}
+
+Status EncodeIndexVec(uint64_t, const std::multimap<uint64_t, uint64_t> &) {
+  return Status(STATUS_OKAY, "");
+}
+Status DecodeIndexVec(uint64_t, uint64_t, std::multimap<uint64_t, uint64_t> &) {
+  return Status(STATUS_OKAY, "");
+}
+void PrintIndexVec(const std::multimap<uint64_t, uint64_t> &) {}
 
 /*
 record header layout:
@@ -78,6 +98,15 @@ Status Record::DecodeRecord(uint64_t address, Record &record) {
   return Status(STATUS_OKAY, "Record::DecodeRecord");
 }
 
+uint32_t Record::RecordSize(const Record &record) {
+  uint32_t size = 0;
+  size += sizeof(record._is_deleted) + sizeof(record._key_size) +
+          sizeof(record._val_size) + sizeof(record._key_margin) +
+          sizeof(record._val_margin) + record._key_size + record._key_margin +
+          record._val_size + record._val_margin;
+  return size;
+}
+
 void Record::Print(const Record &record, bool full) {
   if (full) {
     fprintf(stdout, "[delete]: %d\t", record._is_deleted);
@@ -95,5 +124,4 @@ void Record::Print(const Record &record, bool full) {
     fprintf(stdout, "[v]: %s\n", record._val.data());
   }
 }
-
 }  // namespace minikv

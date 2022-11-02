@@ -16,9 +16,6 @@ Database::Database(const DatabaseOptions &db_option, std::string db_path) {
   // db_path会覆盖db_option._db_path
   if (!db_path.empty()) _db_options._db_path = db_path;
 
-  // for buffer sync between wb and se.
-  // FIXBUG: 刚开始的时候，这儿是栈上分配的，离开作用域直接内存释放了，
-  // 下面两个实例化对象用不了。傻了。
   _flush_event = new Event<std::vector<Record>>();
   // wb
   _write_buffer = new WriteBuffer(_db_options, _flush_event);
@@ -59,7 +56,7 @@ Status Database::Get(const std::string &key, std::string &value) {
   return Get(get_option, key, value);
 }
 
-Status Database::Get(GetOption &get_option, const std::string &key,
+Status Database::Get(const GetOption &get_option, const std::string &key,
                      std::string &value) {
   // first: search in `wb`.
   auto s = _write_buffer->Get(get_option, key, value);
@@ -73,13 +70,17 @@ Status Database::Put(const std::string &key, const std::string &value) {
   return Put(put_option, key, value);
 }
 
-Status Database::Put(PutOption &put_option, const std::string &key,
+Status Database::Put(const PutOption &put_option, const std::string &key,
                      const std::string &value) {
   return _write_buffer->Put(put_option, key, value);
 }
 
 Status Database::Delete(const std::string &key) {
   PutOption put_option;
+  return Delete(put_option, key);
+}
+
+Status Database::Delete(const PutOption &put_option, const std::string &key) {
   return _write_buffer->Delete(put_option, key);
 }
 }  // namespace minikv
